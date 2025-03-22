@@ -1,26 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, View, Text, Image, TouchableOpacity, StyleSheet, Button, Alert } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AdminNav from '../../Components/AdminNav';
 import Header from '../../Components/HeaderAdmin';
 import { FIREBASE_DB } from '../../../Firebase_Config';
 import { collection, onSnapshot } from 'firebase/firestore';
-
-
-
-const garbagebin = require('../../../assets/garbagebin.png');
-const addgarbage = require('../../../assets/addgarbage.png');
-const viewgarbage = require('../../../assets/viewgarbage.png');
-const generatereport = require('../../../assets/generatereport.png');
-
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Import the icon library
 
 const MainGarbage = () => {
   const navigation: any = useNavigation();
-  const [garbagePlaces, setGarbagePlaces] = useState<{ id: string; locationName: string; address: string; capacity:string;contactPerson:string;phoneNumber:string;wasteType:string; }[]>([]);
+  const [garbagePlaces, setGarbagePlaces] = useState<{ id: string; locationName: string; address: string; capacity: string; contactPerson: string; phoneNumber: string; wasteType: string }[]>([]);
   const [filteredPlaces, setFilteredPlaces] = useState<{ id: string; locationName: string; address: string }[]>([]);
   const [searchText, setSearchText] = useState('');
- 
 
   useEffect(() => {
     const fetchGarbagePlaces = async () => {
@@ -29,7 +21,7 @@ const MainGarbage = () => {
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
           const placesData = querySnapshot.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data() as { locationName: string; address: string; capacity:string;contactPerson:string;phoneNumber:string;wasteType:string },
+            ...doc.data() as { locationName: string; address: string; capacity: string; contactPerson: string; phoneNumber: string; wasteType: string },
           }));
           setGarbagePlaces(placesData);
           setFilteredPlaces(placesData); // Set initial filtered places to all places
@@ -44,15 +36,10 @@ const MainGarbage = () => {
     fetchGarbagePlaces();
   }, []);
 
-
   const handleGenerateReport = () => {
     // Navigate to the ReportDetails page, passing the garbage places data
     navigation.navigate('ReportDetails', { garbagePlaces: garbagePlaces });
   };
-
-
-  
-  
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#E8F5E9' }}>
@@ -61,28 +48,26 @@ const MainGarbage = () => {
         <View>
           <Text style={styles.title}>Garbage Bin Information</Text>
         </View>
-        <Image source={garbagebin} style={styles.topImage} />
 
+        {/* Iconic Button for "Add New Garbage Bin Details" */}
         <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('AddGarbagePlace')}>
-            <Image source={addgarbage} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>Add New Garbage Bin Details</Text>
-          </TouchableOpacity>
+          <Icon name="add-circle" size={60} color="#38e079" />
+          <Text style={styles.buttonText}>Add New Garbage Bin Details</Text>
+        </TouchableOpacity>
 
         <View style={styles.gridContainer}>
+          {/* Iconic Button for "View Garbage Bin Details" */}
           <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('HomeG')}>
-            <Image source={viewgarbage} style={styles.buttonImage} />
+            <Icon name="search" size={60} color="#38e079" />
             <Text style={styles.buttonText}>View Garbage Bin Details</Text>
           </TouchableOpacity>
 
-          
-
-          <TouchableOpacity style={styles.gridItem}  onPress={handleGenerateReport}>
-            <Image source={generatereport} style={styles.buttonImage} />
+          {/* Iconic Button for "Generate Report" */}
+          <TouchableOpacity style={styles.gridItem} onPress={handleGenerateReport}>
+            <Icon name="assessment" size={60} color="#38e079" />
             <Text style={styles.buttonText}>Generate Report</Text>
           </TouchableOpacity>
         </View>
-
-       
       </ScrollView>
       <AdminNav />
     </SafeAreaView>
@@ -92,12 +77,6 @@ const MainGarbage = () => {
 export default MainGarbage;
 
 const styles = StyleSheet.create({
-  topImage: {
-    width: '100%',
-    height: 250,
-    marginBottom: 30,
-    borderRadius:10,
-  },
   gridContainer: {
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -110,11 +89,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 10,
-  },
-  buttonImage: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
   },
   buttonText: {
     fontSize: 16,
