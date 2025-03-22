@@ -64,7 +64,7 @@ const DisplayScreen = ({ route }) => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.innerContainer}>
-      <Text style={styles.header}>Smart Waste Analyzer</Text>
+      <Text style={styles.header}>EcoBin Ai Analyzer</Text>
         {selectedImage && <Image source={{ uri: selectedImage }} style={styles.image} />}
         {/* <TextInput
           style={styles.input}
