@@ -25,7 +25,7 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const navigation: any = useNavigation();
+  const navigation = useNavigation();
 
   const validateForm = () => {
     let isValid = true;
@@ -78,9 +78,9 @@ const LoginScreen: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-       <View style={styles.content}>
+      <View style={styles.content}>
         <Image 
-          source={require('../../assets/homeHero.jpg')} // Corrected path
+          source={require('../../assets/homeHero.jpg')}
           style={styles.logo} 
           resizeMode="contain"
         />
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: '#1A1A1A',
+    color: '#0F172A',
   },
   icon: {
     marginRight: 12,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   signupText: {
-    color: '#718096',
+    color: '#64748B',
     fontSize: 14,
   },
   signupLink: {
