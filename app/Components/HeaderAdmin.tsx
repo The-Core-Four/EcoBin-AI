@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
-import {  View, Text, TouchableOpacity, StatusBar, StyleSheet  } from 'react-native';
+import { View, Text, TouchableOpacity, StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../Firebase_Config';
 import { doc, getDoc } from "firebase/firestore";
 import { useNavigation, StackActions } from '@react-navigation/native';
-import userStore from '../Store/userStore'
+import userStore from '../Store/userStore';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const HeaderAdmin: React.FC = () => {
   const user = FIREBASE_AUTH.currentUser;
   const navigation = useNavigation();
-  const { user: storedUser, setUser, clearUser } = userStore(); // Zustand functions
+  const { user: storedUser, setUser, clearUser } = userStore();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -24,22 +25,19 @@ const HeaderAdmin: React.FC = () => {
               email: user.email,
               uid: ''
             });
-          } else {
-            console.log('No document found');
           }
         } catch (error) {
           console.error('Error fetching user details: ', error);
         }
       }
     };
-
     fetchUserData();
   }, [user]);
 
   const logout = () => {
     FIREBASE_AUTH.signOut()
       .then(() => {
-        clearUser(); // Clear the user data on logout
+        clearUser();
         navigation.dispatch(StackActions.replace('Signinscreen'));
       })
       .catch((error) => {
@@ -48,12 +46,23 @@ const HeaderAdmin: React.FC = () => {
   };
 
   return (
-    <SafeAreaView>
+    <SafeAreaView edges={['top']}>
+      <StatusBar backgroundColor="#166534" barStyle="light-content" />
       <View style={styles.headerContainer}>
-        <Text style={styles.adminText}>{'Hello Admin ' + (storedUser?.name || '')}</Text>
-        <StatusBar backgroundColor="#38E079" barStyle="light-content" />
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-          <Text style={styles.logoutText}>Logout</Text>
+        <View style={styles.userInfo}>
+          <Icon name="account-circle" size={28} color="#fff" />
+          <Text style={styles.adminText}>
+            Welcome, {storedUser?.name || 'Admin'}
+          </Text>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={logout}
+          activeOpacity={0.8}
+        >
+          <Icon name="logout" size={18} color="#fff" />
+          <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -62,25 +71,41 @@ const HeaderAdmin: React.FC = () => {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    padding: 20,
-    backgroundColor: '#38E079',
+    backgroundColor: '#166534',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   adminText: {
-    fontSize: 14,
-    color: '#ffffff',
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
   },
   logoutButton: {
-    marginRight: 10,
-    padding: 5,
-    backgroundColor: '#4CAF50',
-    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   logoutText: {
-    fontSize: 8,
-    color: '#ffffff',
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '500',
   },
 });
 
