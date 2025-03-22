@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Smart_Waste",
+    "slug": "Smart_Waste",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff",
+      "permissions": [
+      "mediaLibrary",
+      "writeExternalStorage",
+      "readExternalStorage"
+    ]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses your location.",
+        "GMSApiKey": "AIzaSyADfLlJvc3q9pNkqlb9HbMAQWpW3d2kS90"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyADfLlJvc3q9pNkqlb9HbMAQWpW3d2kS90"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  
+    
+  }
+}
