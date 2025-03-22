@@ -4,7 +4,7 @@ import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Google Generative AI SDK
-const API_KEY = "";
+const API_KEY = "AIzaSyBf7I5bOeT6Tk4I8OsGQhOUgQcVmdgzxRc";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 const model = genAI.getGenerativeModel({
