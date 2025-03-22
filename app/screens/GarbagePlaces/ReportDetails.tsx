@@ -1,14 +1,13 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View, SafeAreaView ,Alert,Button,Linking, TouchableOpacity} from 'react-native';
+import { ScrollView, StyleSheet, Text, View, SafeAreaView, Alert, TouchableOpacity, Linking } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import * as Print from 'expo-print';
-import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import Header from '../../Components/HeaderAdmin';
 
 const ReportDetails = () => {
   const route = useRoute();
-  const { garbagePlaces } = route.params as { garbagePlaces: { id: string; locationName: string; address: string; capacity:string;contactPerson:string;phoneNumber:string;wasteType:string; }[] };
+  const { garbagePlaces = [] } = route.params || { garbagePlaces: [] };
 
   const generatePDF = async () => {
     const htmlContent = `
@@ -31,10 +30,7 @@ const ReportDetails = () => {
     `;
 
     try {
-      // Generate PDF using expo-print
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-
-      // Share the PDF
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       } else {
@@ -45,7 +41,7 @@ const ReportDetails = () => {
       console.error(error);
     }
   };
-  
+
   const openInMaps = (address: string) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
     Linking.openURL(url).catch(() => {
@@ -55,26 +51,29 @@ const ReportDetails = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header/>
+      <Header />
       <Text style={styles.title}>Garbage Places Report</Text>
       <ScrollView contentContainerStyle={styles.reportContent}>
-        {garbagePlaces.map((place) => (
-          <View key={place.id} style={styles.reportItem}>
-            <Text style={styles.reportText}><Text style={styles.bold}>Location Name:</Text> {place.locationName}</Text>
-            <Text 
-              style={[styles.reportText, styles.link]} 
-              onPress={() => openInMaps(place.address)}
-            >
-              <Text style={styles.bold}>Address:</Text> {place.address}
-            </Text>
-            <Text style={styles.reportText}><Text style={styles.bold}>Capacity:</Text> {place.capacity}</Text>
-            <Text style={styles.reportText}><Text style={styles.bold}>Contact Person:</Text> {place.contactPerson}</Text>
-            <Text style={styles.reportText}><Text style={styles.bold}>Phone Number:</Text> {place.phoneNumber}</Text>
-            <Text style={styles.reportText}><Text style={styles.bold}>Waste Type:</Text> {place.wasteType}</Text>
-          </View>
-        ))}
+        {garbagePlaces.length > 0 ? (
+          garbagePlaces.map((place) => (
+            <View key={place.id} style={styles.card}>
+              <Text style={styles.cardTitle}>{place.locationName}</Text>
+              <TouchableOpacity onPress={() => openInMaps(place.address)}>
+                <Text style={styles.linkText}>{place.address}</Text>
+              </TouchableOpacity>
+              <Text style={styles.cardText}>Capacity: {place.capacity}</Text>
+              <Text style={styles.cardText}>Contact: {place.contactPerson}</Text>
+              <Text style={styles.cardText}>Phone: {place.phoneNumber}</Text>
+              <Text style={styles.cardText}>Waste Type: {place.wasteType}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyText}>No garbage places found.</Text>
+        )}
       </ScrollView>
-      <TouchableOpacity style={styles.rb}  onPress={generatePDF} ><Text style={styles.rbt}>Download PDF</Text></TouchableOpacity>
+      <TouchableOpacity style={styles.downloadButton} onPress={generatePDF}>
+        <Text style={styles.downloadButtonText}>Download PDF</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -84,46 +83,65 @@ export default ReportDetails;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EFF6F0',
+    backgroundColor: '#F9FAFB',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     textAlign: 'center',
     marginVertical: 20,
-    marginBottom:5,
+    color: '#111827',
   },
   reportContent: {
     flexGrow: 1,
-    padding:20,
+    padding: 20,
   },
-  reportItem: {
-    backgroundColor: '#C2E0C0',
-    padding: 15,
-    borderRadius: 10,
+  card: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 15,
     marginBottom: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  reportText: {
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 5,
+  },
+  cardText: {
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: 3,
+  },
+  linkText: {
+    color: '#2563EB',
+    textDecorationLine: 'underline',
+    marginBottom: 3,
+    fontSize: 14,
+  },
+  downloadButton: {
+    width: '50%',
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#10B981',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    marginVertical: 15,
+  },
+  downloadButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#6B7280',
+    marginTop: 20,
     fontSize: 16,
   },
-  bold: {
-    fontWeight: 'bold',
-  },
-  link: {
-    color: 'black',
-    textDecorationLine: 'underline',
-  },
-  rb:{
-    width:'40%',
-    height: 50,
-    borderRadius:10,
-    backgroundColor:'#28A745',
-    alignSelf:'center',
-  },
-  rbt:{
-    fontSize:15,
-    color:'#FFFFFF',
-    textAlign:'center',
-    marginTop:10,
-  }
 });
