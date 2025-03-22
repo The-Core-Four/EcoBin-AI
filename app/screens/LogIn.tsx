@@ -46,7 +46,7 @@ const LoginScreen: React.FC = () => {
   return (
     <View style={styles.container}>
 
-      <Text style={styles.header}>Smart Waste</Text>
+      <Text style={styles.header}>EcoBin Ai</Text>
       <Image source={hero} style={styles.topImage} />
       <TextInput 
         value={email} 
