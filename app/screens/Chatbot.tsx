@@ -63,10 +63,12 @@ export default function App() {
         <Text style={styles.header}>EcoBin Ai Chatbot</Text>
       </View>
 
-      {/* Center and enlarge the chatbot image */}
-      <View style={styles.imageContainer}>
-        <Image source={require("../../assets/chatbot.png")} style={styles.chatbotImage} />
-      </View>
+      {/* Hide chatbot image when chat has messages */}
+      {messages.length === 0 && (
+        <View style={styles.imageContainer}>
+          <Image source={require("../../assets/chatbot.png")} style={styles.chatbotImage} />
+        </View>
+      )}
 
       <ScrollView style={styles.chatContainer}>
         {messages.map((message, index) => (
@@ -86,7 +88,7 @@ export default function App() {
           placeholderTextColor="#aaa"
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleMessageSend}>
-          <Text style={styles.sendButtonText}>Send</Text>
+          <Image source={require("../../assets/Vector.png")} style={styles.sendButtonImage} />
         </TouchableOpacity>
       </View>
     </View>
@@ -113,14 +115,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   imageContainer: {
-    alignItems: "center",  // Center the image horizontally
-    justifyContent: "center", // Center the image vertically
-    marginVertical: 100,  // Add space around the image
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 100,
   },
   chatbotImage: {
-    width: 500, // Increase the width of the image
-    height: 400, // Increase the height of the image
-    resizeMode: "contain", // Maintain aspect ratio while resizing
+    width: 500,
+    height: 400,
+    resizeMode: "contain",
   },
   chatContainer: {
     flex: 1,
@@ -145,17 +147,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sendButton: {
-    backgroundColor: "#4CAF50",
-    paddingVertical: 15,
-    paddingHorizontal: 25,
-    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#4CAF50",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    elevation: 3,
   },
-  sendButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+  sendButtonImage: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
   },
   userMessage: {
     alignSelf: "flex-end",
