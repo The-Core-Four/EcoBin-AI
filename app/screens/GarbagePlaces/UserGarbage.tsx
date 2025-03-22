@@ -6,13 +6,13 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import CustomerNav from '../../Components/CustomerNav';
 import Header from '../../Components/HeaderCustomer';
 import * as Location from 'expo-location';
-import Icon from 'react-native-vector-icons/MaterialIcons'; 
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const UserGarbage = () => {
-  const [garbagePlaces, setGarbagePlaces] = useState<{ id: string; locationName: string; address: string; capacity: string; contactPerson: string; phoneNumber: string; wasteType: string; latitude: number; longitude: number }[]>([]);
-  const [filteredPlaces, setFilteredPlaces] = useState<{ id: string; locationName: string; address: string }[]>([]);
+  const [garbagePlaces, setGarbagePlaces] = useState([]);
+  const [filteredPlaces, setFilteredPlaces] = useState([]);
   const [searchText, setSearchText] = useState('');
-  const navigation: any = useNavigation();
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchGarbagePlaces = async () => {
@@ -21,114 +21,99 @@ const UserGarbage = () => {
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
           const placesData = querySnapshot.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data() as { locationName: string; address: string; capacity: string; contactPerson: string; phoneNumber: string; wasteType: string; latitude: number; longitude: number },
+            ...doc.data(),
           }));
           setGarbagePlaces(placesData);
-          setFilteredPlaces(placesData); 
+          setFilteredPlaces(placesData);
         });
-
         return () => unsubscribe();
       } catch (error) {
         console.error('Error fetching garbage places: ', error);
       }
     };
-
     fetchGarbagePlaces();
   }, []);
 
-  
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Radius of the earth in kilometers
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in kilometers
-    return distance;
-  };
-
-  
   const fetchCurrentLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission Denied', 'Permission to access location was denied.');
       return;
     }
-  
+
     let location = await Location.getCurrentPositionAsync({});
     if (location) {
       const { latitude, longitude } = location.coords;
-  
       const reverseGeocode = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (reverseGeocode.length > 0) {
         const locationName = `${reverseGeocode[0].city}`;
         setSearchText(locationName);
-  
-        // Filter garbage places where the address includes the location name (city or region)
         const matchingPlaces = garbagePlaces.filter((place) =>
           place.address.toLowerCase().includes(locationName.toLowerCase())
         );
-  
-        if (matchingPlaces.length > 0) {
-          setFilteredPlaces(matchingPlaces);
-        } else {
-          Alert.alert('No Matches', 'No garbage places found for your current location.');
-        }
-      } else {
-        Alert.alert('Location Error', 'Unable to fetch location details');
+        matchingPlaces.length > 0 
+          ? setFilteredPlaces(matchingPlaces)
+          : Alert.alert('No Matches', 'No garbage places found for your current location.');
       }
     }
   };
-  
 
-  
-  const handleSearch = (text: string) => {
+  const handleSearch = (text) => {
     setSearchText(text);
-    if (text === '') {
-      setFilteredPlaces(garbagePlaces); 
-    } else {
-      const filtered = garbagePlaces.filter((place) =>
-        place.address.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredPlaces(filtered);
-    }
+    const filtered = text === '' 
+      ? garbagePlaces 
+      : garbagePlaces.filter((place) =>
+          place.address.toLowerCase().includes(text.toLowerCase())
+        );
+    setFilteredPlaces(filtered);
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safeArea}>
       <Header />
-      <ScrollView contentContainerStyle={styles.layout}>
-        <Text style={styles.h1d}>Garbage Disposal Places</Text>
-        <TextInput
-          style={styles.search}
-          placeholder="Search for garbage places by address"
-          value={searchText}
-          onChangeText={handleSearch} 
-        />
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.header}>Garbage Disposal Points</Text>
 
-        
-        <TouchableOpacity style={styles.locationBtn} onPress={fetchCurrentLocation}>
-          <Icon name="location-on" size={20} color="#fff" style={styles.iconStyle} />
-          <Text style={styles.locationBtnText}>Use My Location</Text>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#64748B" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by address..."
+            placeholderTextColor="#94A3B8"
+            value={searchText}
+            onChangeText={handleSearch}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.locationButton} onPress={fetchCurrentLocation}>
+          <Icon name="my-location" size={20} color="#FFF" />
+          <Text style={styles.locationButtonText}>Use Current Location</Text>
         </TouchableOpacity>
 
-        <View style={styles.mainframe}>
+        <View style={styles.resultsContainer}>
           {filteredPlaces.length > 0 ? (
             filteredPlaces.map((place) => (
-              <View key={place.id} style={styles.frame}>
-                <Text style={styles.ss2}>{place.address}</Text>
-                <TouchableOpacity
-                  style={styles.btn1}
-                  onPress={() => navigation.navigate('UserView', { id: place.id })}
-                >
-                  <Text style={styles.btntxt1}>View</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                key={place.id}
+                style={styles.locationCard}
+                onPress={() => navigation.navigate('UserView', { id: place.id })}
+              >
+                <Icon name="place" size={24} color="#28A745" style={styles.cardIcon} />
+                <View style={styles.cardContent}>
+                  <Text style={styles.locationAddress}>{place.address}</Text>
+                  <View style={styles.detailsRow}>
+                    <Text style={styles.capacityBadge}>{place.capacity} capacity</Text>
+                    <Text style={styles.wasteType}>{place.wasteType}</Text>
+                  </View>
+                </View>
+                <Icon name="chevron-right" size={24} color="#CBD5E1" />
+              </TouchableOpacity>
             ))
           ) : (
-            <Text>No matching garbage places found.</Text>
+            <View style={styles.emptyState}>
+              <Icon name="location-off" size={40} color="#CBD5E1" />
+              <Text style={styles.emptyText}>No locations found</Text>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -137,90 +122,131 @@ const UserGarbage = () => {
   );
 };
 
-export default UserGarbage;
-
 const styles = StyleSheet.create({
-  layout: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#EFF6F0',
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
   },
-  h1d: {
+  container: {
+    padding: 24,
+  },
+  header: {
+    fontSize: 26,
     fontWeight: '700',
-    fontSize: 22,
+    color: '#0F172A',
+    marginBottom: 28,
     textAlign: 'center',
-    color: '#000000',
+  },
+  searchContainer: {
+    position: 'relative',
     marginBottom: 20,
   },
-  search: {
-    width: '100%',
-    height: 40,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 10,
-    borderColor: '#DBDBDB',
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  locationBtn: {
-    flexDirection: 'row',
-    alignSelf:'center',
-    backgroundColor: '#28A745',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 20,
-    justifyContent: 'center',
-    width:200,
-  },
-  locationBtnText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-    marginLeft: 5, 
-  },
-  iconStyle: {
-    marginRight: 10,
-  },
-  mainframe: {
-    flexGrow: 1,
-  },
-  frame: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#C2E0C0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  searchInput: {
+    backgroundColor: '#FFF',
     borderRadius: 12,
-    padding: 10,
-    marginTop: 2,
-    marginBottom: 20,
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-  },
-  btn1: {
-    width: 56.95,
-    height: 36,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    marginTop: 5,
-  },
-  btntxt1: {
-    fontWeight: '500',
-    fontSize: 14,
-    color: '#141414',
-  },
-  ss1: {
-    fontWeight: '700',
-    fontSize: 18,
-    marginBottom: 10,
-  },
-  ss2: {
-    fontWeight: '400',
+    paddingVertical: 14,
+    paddingLeft: 48,
+    paddingRight: 20,
     fontSize: 16,
+    color: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 16,
+    top: 16,
+    zIndex: 1,
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#28A745',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  locationButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  resultsContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  locationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  cardIcon: {
+    marginRight: 16,
+  },
+  cardContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  locationAddress: {
+    fontSize: 16,
+    color: '#0F172A',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  capacityBadge: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  wasteType: {
+    fontSize: 12,
+    color: '#28A745',
+    fontWeight: '600',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    marginTop: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#94A3B8',
+    marginTop: 12,
+    fontWeight: '500',
   },
 });
+
+export default UserGarbage;
