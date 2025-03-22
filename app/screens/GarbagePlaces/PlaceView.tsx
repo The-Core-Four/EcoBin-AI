@@ -78,8 +78,10 @@ const PlaceView = ({ route }) => {
             <Text style={styles.value}>{garbagePlace.address}</Text>
           </View>
           <TouchableOpacity style={styles.mapButton} onPress={openInGoogleMaps}>
+            <Icon name="location-on" style={styles.mapButtonIcon} />
             <Text style={styles.mapButtonText}>View on Map</Text>
           </TouchableOpacity>
+
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Capacity:</Text>
@@ -158,17 +160,28 @@ const styles = StyleSheet.create({
     color: '#333',
     flex: 2,
     flexWrap: 'wrap',
+    lineHeight: 22,
   },
   mapButton: {
-    backgroundColor: '#28A745',
-    paddingVertical: 12,
+    backgroundColor: '#28A745', 
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 10,
-    marginTop: 15,
+    marginTop: 0,
     alignItems: 'center',
+    flexDirection: 'row', // Align icon and text horizontally
+    justifyContent: 'center', // Center the content
+    elevation: 2, // Add subtle shadow
   },
   mapButtonText: {
     fontSize: 16,
     color: '#fff',
+    marginLeft: 8, // Space between icon and text
+  },
+  mapButtonIcon: {
+    fontSize: 18,
+    color: '#fff',
+    marginRight: 8, // Space between icon and text
   },
   actionButtons: {
     flexDirection: 'row',
