@@ -1,6 +1,11 @@
 // navigation/AppNavigator.tsx
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator, NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { useThemeColor } from '../app/hooks/useThemeColor'; 
+import { ThemedText } from '../app/Components/ThemedText'; 
+import { ThemedView } from '../app/Components/ThemedView'; 
+import { ColorSchemeName } from '../types/theme.types';
+
 import HomeDD from '../app/screens/DriverDetails/HomeDD';
 import AddDriverDetails from '../app/screens/DriverDetails/AddDriverDetails';
 import DDList from '../app/screens/DriverDetails/DDList';
@@ -29,41 +34,170 @@ import DisplayScreen from '../app/screens/DisplayScreen';
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
+  const backgroundColor = useThemeColor('background');
+  const textColor = useThemeColor('text');
+  const headerTint = useThemeColor('primary');
+
+  // Type-safe screen options
+  const screenOptions: NativeStackNavigationOptions = {
+    headerShown: true,
+    headerStyle: {
+      backgroundColor: backgroundColor,
+    },
+    headerTintColor: headerTint,
+    headerTitleStyle: {
+      color: textColor,
+    },
+    headerTitle: ({ children }) => (
+      <ThemedText style={{ fontSize: 18, fontWeight: 'bold' }}>
+        {children}
+      </ThemedText>
+    ),
+    headerBackground: () => <ThemedView style={{ flex: 1 }} children={undefined} />,
+  };
+
   return (
-    <Stack.Navigator initialRouteName="SignIn" screenOptions={{ headerShown: false }}>
-      {/* Auth Screens */}
-      <Stack.Screen name="LogIn" component={SignInScreen} />
-      <Stack.Screen name="SignUp" component={SignUpScreen} />
+    <Stack.Navigator 
+      initialRouteName="SignIn" 
+      screenOptions={screenOptions}
+    >
+      {/* Authentication Flow */}
+      <Stack.Group>
+        <Stack.Screen 
+          name="LogIn" 
+          component={SignInScreen} 
+          options={{ title: 'User Login' }}
+        />
+        <Stack.Screen 
+          name="SignUp" 
+          component={SignUpScreen} 
+          options={{ title: 'Create Account' }}
+        />
+      </Stack.Group>
 
-      {/* Driver Details Screens */}
-      <Stack.Screen name="HomeDD" component={HomeDD} />
-      <Stack.Screen name="AddDriverDetails" component={AddDriverDetails} />
-      <Stack.Screen name="DDList" component={DDList} />
-      <Stack.Screen name="UpdateDeleteDD" component={UpdateDeleteDD} />
+      {/* Driver Management Flow */}
+      <Stack.Group screenOptions={{ headerBackTitleVisible: false }}>
+        <Stack.Screen 
+          name="HomeDD" 
+          component={HomeDD} 
+          options={{ title: 'Driver Management' }}
+        />
+        <Stack.Screen 
+          name="AddDriverDetails" 
+          component={AddDriverDetails} 
+          options={{ title: 'Add New Driver' }}
+        />
+        <Stack.Screen 
+          name="DDList" 
+          component={DDList} 
+          options={{ title: 'Driver List' }}
+        />
+        <Stack.Screen 
+          name="UpdateDeleteDD" 
+          component={UpdateDeleteDD} 
+          options={{ title: 'Edit Driver' }}
+        />
+      </Stack.Group>
 
-      {/* Garbage Management Screens */}
-      <Stack.Screen name="AddGarbagePlace" component={AddGarbagePlace} />
-      <Stack.Screen name="HomeG" component={HomeG} />
-      <Stack.Screen name="PlaceView" component={PlaceView} />
-      <Stack.Screen name="EditPlace" component={EditPlace} />
-      <Stack.Screen name="MapLocator" component={MapLocator} />
-      <Stack.Screen name="ReportDetails" component={ReportDetails} />
-      <Stack.Screen name="UserGarbage" component={UserGarbage} />
-      <Stack.Screen name="UserView" component={UserView} />
-      <Stack.Screen name="MainGarbage" component={MainGarbage} />
+      {/* Garbage Management Flow */}
+      <Stack.Group screenOptions={{ animation: 'slide_from_right' }}>
+        <Stack.Screen 
+          name="AddGarbagePlace" 
+          component={AddGarbagePlace} 
+          options={{ title: 'Add Location' }}
+        />
+        <Stack.Screen 
+          name="HomeG" 
+          component={HomeG} 
+          options={{ title: 'Garbage Locations' }}
+        />
+        <Stack.Screen 
+          name="PlaceView" 
+          component={PlaceView} 
+          options={{ title: 'Location Details' }}
+        />
+        <Stack.Screen 
+          name="EditPlace" 
+          component={EditPlace} 
+          options={{ title: 'Edit Location' }}
+        />
+        <Stack.Screen 
+          name="MapLocator" 
+          component={MapLocator} 
+          options={{ title: 'Map View' }}
+        />
+        <Stack.Screen 
+          name="ReportDetails" 
+          component={ReportDetails} 
+          options={{ title: 'Report Details' }}
+        />
+        <Stack.Screen 
+          name="UserGarbage" 
+          component={UserGarbage} 
+          options={{ title: 'My Reports' }}
+        />
+        <Stack.Screen 
+          name="UserView" 
+          component={UserView} 
+          options={{ title: 'User View' }}
+        />
+        <Stack.Screen 
+          name="MainGarbage" 
+          component={MainGarbage} 
+          options={{ title: 'Garbage Dashboard' }}
+        />
+      </Stack.Group>
 
-      {/* Complaint Screens */}
-      <Stack.Screen name="AddComplaint" component={AddComplaint} />
-      <Stack.Screen name="CustomerHome" component={CustomerHome} />
-      <Stack.Screen name="ComplaintList" component={ComplaintList} />
-      <Stack.Screen name="UpdateDeleteComplaint" component={UpdateDeleteComplaint} />
-      <Stack.Screen name="AdminSideComplaint" component={AdminSideComplaint} />
-      <Stack.Screen name="ComplaintReport" component={ComplaintReport} />
+      {/* Complaint Management Flow */}
+      <Stack.Group screenOptions={{ presentation: 'modal' }}>
+        <Stack.Screen 
+          name="AddComplaint" 
+          component={AddComplaint} 
+          options={{ title: 'New Complaint' }}
+        />
+        <Stack.Screen 
+          name="CustomerHome" 
+          component={CustomerHome} 
+          options={{ title: 'Complaints Home' }}
+        />
+        <Stack.Screen 
+          name="ComplaintList" 
+          component={ComplaintList} 
+          options={{ title: 'All Complaints' }}
+        />
+        <Stack.Screen 
+          name="UpdateDeleteComplaint" 
+          component={UpdateDeleteComplaint} 
+          options={{ title: 'Edit Complaint' }}
+        />
+        <Stack.Screen 
+          name="AdminSideComplaint" 
+          component={AdminSideComplaint} 
+          options={{ title: 'Admin View' }}
+        />
+        <Stack.Screen 
+          name="ComplaintReport" 
+          component={ComplaintReport} 
+          options={{ title: 'Complaint Report' }}
+        />
+      </Stack.Group>
 
       {/* Utility Screens */}
-      <Stack.Screen name="CameraScreen" component={CameraScreen} />
-      <Stack.Screen name="Chatbot" component={Chatbot} />
-      <Stack.Screen name="DisplayScreen" component={DisplayScreen} />
+      <Stack.Group screenOptions={{ headerShown: false }}>
+        <Stack.Screen 
+          name="CameraScreen" 
+          component={CameraScreen} 
+        />
+        <Stack.Screen 
+          name="Chatbot" 
+          component={Chatbot} 
+          options={{ title: 'Support Chat' }}
+        />
+        <Stack.Screen 
+          name="DisplayScreen" 
+          component={DisplayScreen} 
+        />
+      </Stack.Group>
     </Stack.Navigator>
   );
 };

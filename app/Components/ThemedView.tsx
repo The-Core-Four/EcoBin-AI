@@ -1,14 +1,35 @@
-import { View, type ViewProps } from 'react-native';
-
+import { useEffect, useRef } from 'react';
+import { Animated, StyleProp, ViewStyle } from 'react-native';
+import { useColorScheme } from '../hooks/useColorScheme';
 import { useThemeColor } from '../hooks/useThemeColor';
 
-export type ThemedViewProps = ViewProps & {
-  lightColor?: string;
-  darkColor?: string;
+type ThemedViewProps = {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function ThemedView({ style, lightColor, darkColor, ...otherProps }: ThemedViewProps) {
-  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
+export const ThemedView = ({ children, style, ...props }: ThemedViewProps) => {
+  const { colorScheme } = useColorScheme();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  return <View style={[{ backgroundColor }, style]} {...otherProps} />;
-}
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [colorScheme]);
+
+  return (
+    <Animated.View
+      style={[
+        { backgroundColor: useThemeColor('background') },
+        { opacity: fadeAnim },
+        style,
+      ]}
+      {...props}
+    >
+      {children}
+    </Animated.View>
+  );
+};

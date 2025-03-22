@@ -1,22 +1,41 @@
-/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
+// app/hooks/useThemeColor.ts
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ColorSchemeName, ThemeColors } from '../../types/theme.types';
 
-import { useColorScheme } from 'react-native';
-
-import { Colors } from '../constants/Colors';
-
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
-) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
-
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
+const DEFAULT_COLORS = {
+  light: {
+    background: '#FFFFFF',
+    primary: '#007AFF',
+    text: '#1C1C1E'
+  },
+  dark: {
+    background: '#000000',
+    primary: '#0A84FF',
+    text: '#FFFFFF'
   }
-}
+};
+
+export const useTheme = () => {
+  const [theme, setTheme] = useState<ColorSchemeName>('light');
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      const savedTheme = await AsyncStorage.getItem('userTheme');
+      if (savedTheme) setTheme(savedTheme as ColorSchemeName);
+    };
+    loadTheme();
+  }, []);
+
+  const persistTheme = async (newTheme: ColorSchemeName) => {
+    await AsyncStorage.setItem('userTheme', newTheme);
+    setTheme(newTheme);
+  };
+
+  return { theme, setTheme: persistTheme };
+};
+
+export const useThemeColor = (colorName: keyof ThemeColors) => {
+  const { theme } = useTheme();
+  return DEFAULT_COLORS[theme][colorName];
+};

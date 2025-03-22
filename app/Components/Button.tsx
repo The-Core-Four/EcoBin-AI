@@ -1,30 +1,32 @@
-import * as React from 'react';
-import { Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Entypo } from '@expo/vector-icons';
+import { ThemedView } from './ThemedView';
+import { ThemedText } from './ThemedText';
+import { useColorScheme } from '../hooks/useColorScheme';
+import { useThemeColor } from '../hooks/useThemeColor';
+import { lighten, darken } from 'polished';
 
+type ButtonProps = {
+  children: string;
+  onPress?: () => void;
+};
 
+export const Button = ({ children, onPress }: ButtonProps) => {
+  const { isDark } = useColorScheme();
+  const bgColor = useThemeColor('primary');
+  const textColor = isDark ? lighten(0.4, bgColor) : darken(0.4, bgColor);
 
-export default function Button({title, onPress, icon, color}) {
   return (
-    <TouchableOpacity onPress={onPress} style={styles.button}>
-        <Entypo name={icon} size={28} color={color ? color : '#f1f1f1'}/>
-        <Text style={styles.text}>{title}</Text>
-
-    </TouchableOpacity>
-  )
-}
-
-const styles = StyleSheet.create({
-    button: {
-        height: 40,
-        flexDirection: 'row',
+    <ThemedView
+      style={{
+        backgroundColor: bgColor,
+        padding: 16,
+        borderRadius: 8,
         alignItems: 'center',
-        justifyContent: 'center',
-    },
-    text: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        color: '#f1f1f1',
-        marginLeft: 10,
-    }
-})
+      }}
+      onPress={onPress}
+    >
+      <ThemedText style={{ color: textColor, fontWeight: '600' }}>
+        {children}
+      </ThemedText>
+    </ThemedView>
+  );
+};
