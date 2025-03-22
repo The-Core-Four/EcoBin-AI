@@ -9,15 +9,15 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
-      "permissions": [
-      "mediaLibrary",
-      "writeExternalStorage",
-      "readExternalStorage"
-    ]
+      "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "assets/**/*",
+      "app/**/*"
+    ],
     "ios": {
       "supportsTablet": true,
+      "newArchEnabled": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location.",
         "GMSApiKey": "AIzaSyADfLlJvc3q9pNkqlb9HbMAQWpW3d2kS90"
@@ -28,6 +28,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": [
+        "mediaLibrary",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE"
+      ],
+      "newArchEnabled": true,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyADfLlJvc3q9pNkqlb9HbMAQWpW3d2kS90"
@@ -37,7 +43,5 @@
     "web": {
       "favicon": "./assets/favicon.png"
     }
-  
-    
   }
 }
