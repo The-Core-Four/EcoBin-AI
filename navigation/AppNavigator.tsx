@@ -1,6 +1,7 @@
 // navigation/AppNavigator.tsx
 import React from 'react';
 import { createNativeStackNavigator, NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { useAppTheme } from '../app/context/ThemeContext';
 import { useThemeColor } from '../app/hooks/useThemeColor'; 
 import { ThemedText } from '../app/Components/ThemedText'; 
 import { ThemedView } from '../app/Components/ThemedView'; 
@@ -34,6 +35,8 @@ import DisplayScreen from '../app/screens/DisplayScreen';
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
+  const { theme } = useAppTheme(); // Get theme from context
+  
   const backgroundColor = useThemeColor('background');
   const textColor = useThemeColor('text');
   const headerTint = useThemeColor('primary');
