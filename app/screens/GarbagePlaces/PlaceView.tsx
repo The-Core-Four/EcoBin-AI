@@ -1,5 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, SafeAreaView } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Alert, 
+  Linking, 
+  SafeAreaView, 
+  ActivityIndicator,
+  Image
+} from 'react-native';
 import { FIREBASE_DB } from '../../../Firebase_Config';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -7,23 +18,40 @@ import AdminNav from '../../Components/AdminNav';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from '../../Components/HeaderAdmin';
 
+interface GarbagePlace {
+  id: string;
+  locationName: string;
+  address: string;
+  capacity: string;
+  contactPerson: string;
+  phoneNumber: string;
+  wasteType: string;
+}
+
 const PlaceView = ({ route }) => {
   const { id } = route.params;
-  const [garbagePlace, setGarbagePlace] = useState(null);
+  const [garbagePlace, setGarbagePlace] = useState<GarbagePlace | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const navigation = useNavigation();
 
-  // Fetch the garbage place details from Firestore
   const fetchGarbagePlace = useCallback(async () => {
     try {
+      setLoading(true);
+      setError('');
       const docRef = doc(FIREBASE_DB, 'GarbagePlaces', id);
       const docSnap = await getDoc(docRef);
+      
       if (docSnap.exists()) {
-        setGarbagePlace(docSnap.data());
+        setGarbagePlace({ id: docSnap.id, ...docSnap.data() } as GarbagePlace);
       } else {
-        console.log('No such document!');
+        setError('Location not found');
       }
     } catch (error) {
+      setError('Failed to load location details');
       console.error("Error fetching garbage place details: ", error);
+    } finally {
+      setLoading(false);
     }
   }, [id]);
 
@@ -33,81 +61,142 @@ const PlaceView = ({ route }) => {
     }, [fetchGarbagePlace])
   );
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this location?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: confirmDelete }
+      ]
+    );
+  };
+
+  const confirmDelete = async () => {
     try {
       const docRef = doc(FIREBASE_DB, 'GarbagePlaces', id);
       await deleteDoc(docRef);
-      Alert.alert('Success', 'Garbage place deleted successfully!');
+      Alert.alert('Success', 'Location deleted successfully!');
       navigation.navigate('HomeG');
     } catch (error) {
-      Alert.alert('Error', 'Error deleting garbage place: ' + error.message);
+      Alert.alert('Error', 'Failed to delete location. Please try again.');
     }
   };
 
-  if (!garbagePlace) {
+  const openInGoogleMaps = () => {
+    if (!garbagePlace?.address) {
+      Alert.alert('Error', 'No address provided');
+      return;
+    }
+    
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(garbagePlace.address)}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Error', 'Unable to open maps app');
+    });
+  };
+
+  const formatPhoneNumber = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    return match ? `${match[1]} ${match[2]} ${match[3]}` : phone;
+  };
+
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text style={styles.loadingText}>Loading Location Details...</Text>
       </View>
     );
   }
 
-  const openInGoogleMaps = () => {
-    if (garbagePlace.address) {
-      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(garbagePlace.address)}`;
-      Linking.openURL(url).catch(err => console.error('Error opening Google Maps', err));
-    } else {
-      alert("No address provided to open in Google Maps.");
-    }
-  };
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Icon name="error-outline" size={40} color="#ff4444" />
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchGarbagePlace}>
+          <Text style={styles.retryText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <ScrollView contentContainerStyle={styles.layoutgd}>
-        <Text style={styles.header}>Garbage Location Details</Text>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.header}>EcoBin Location Details</Text>
 
-        <View style={styles.infoContainer}>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Location Name:</Text>
-            <Text style={styles.value}>{garbagePlace.locationName}</Text>
-          </View>
+        <View style={styles.card}>
+          <DetailRow 
+            icon="place" 
+            label="Location Name" 
+            value={garbagePlace.locationName} 
+          />
+          
+          <DetailRow 
+            icon="location-pin" 
+            label="Address" 
+            value={garbagePlace.address} 
+          />
 
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Address:</Text>
-            <Text style={styles.value}>{garbagePlace.address}</Text>
-          </View>
-          <TouchableOpacity style={styles.mapButton} onPress={openInGoogleMaps}>
-            <Icon name="location-on" style={styles.mapButtonIcon} />
-            <Text style={styles.mapButtonText}>View on Map</Text>
+          <TouchableOpacity 
+            style={styles.mapButton} 
+            onPress={openInGoogleMaps}
+            accessibilityLabel="View location on map"
+          >
+            <Image
+              source={{ uri: `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(garbagePlace.address)}&zoom=14&size=400x150&key=${process.env.GOOGLE_MAPS_API_KEY}` }}
+              style={styles.mapImage}
+            />
+            <View style={styles.mapOverlay}>
+              <Icon name="map" size={24} color="#FFF" />
+              <Text style={styles.mapButtonText}>View in Maps</Text>
+            </View>
           </TouchableOpacity>
 
-
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Capacity:</Text>
-            <Text style={styles.value}>{garbagePlace.capacity}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Contact Person:</Text>
-            <Text style={styles.value}>{garbagePlace.contactPerson}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Phone Number:</Text>
-            <Text style={styles.value}>{garbagePlace.phoneNumber}</Text>
+          <View style={styles.detailsGrid}>
+            <DetailRow
+              icon="storage"
+              label="Capacity"
+              value={`${garbagePlace.capacity} kg`}
+              containerStyle={styles.detailBox}
+            />
+            <DetailRow
+              icon="person"
+              label="Contact Person"
+              value={garbagePlace.contactPerson}
+              containerStyle={styles.detailBox}
+            />
+            <DetailRow
+              icon="phone"
+              label="Contact Number"
+              value={formatPhoneNumber(garbagePlace.phoneNumber)}
+              containerStyle={styles.detailBox}
+            />
+            <DetailRow
+              icon="delete"
+              label="Waste Type"
+              value={garbagePlace.wasteType}
+              containerStyle={styles.detailBox}
+            />
           </View>
         </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditPlace', { id })}>
-            <Icon name="edit" size={20} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Icon name="delete" size={20} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>Delete</Text>
-          </TouchableOpacity>
+        <View style={styles.actionContainer}>
+          <ActionButton 
+            icon="edit" 
+            label="Edit" 
+            color="#007BFF" 
+            onPress={() => navigation.navigate('EditPlace', { id })} 
+          />
+          <ActionButton 
+            icon="delete" 
+            label="Delete" 
+            color="#DC3545" 
+            onPress={handleDelete} 
+          />
         </View>
       </ScrollView>
       <AdminNav />
@@ -115,108 +204,169 @@ const PlaceView = ({ route }) => {
   );
 };
 
-export default PlaceView;
+const DetailRow = ({ icon, label, value, containerStyle }) => (
+  <View style={[styles.detailRow, containerStyle]}>
+    <Icon name={icon} size={20} color="#4CAF50" style={styles.detailIcon} />
+    <View style={styles.detailTextContainer}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
+    </View>
+  </View>
+);
+
+const ActionButton = ({ icon, label, color, onPress }) => (
+  <TouchableOpacity 
+    style={[styles.actionButton, { backgroundColor: color }]}
+    onPress={onPress}
+    accessibilityRole="button"
+  >
+    <Icon name={icon} size={20} color="#FFF" />
+    <Text style={styles.actionButtonText}>{label}</Text>
+  </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F8F9FA',
   },
-  layoutgd: {
+  content: {
     padding: 20,
-    backgroundColor: '#EFF6F0',
+    paddingBottom: 40,
   },
   header: {
+    fontSize: 24,
     fontWeight: '700',
-    fontSize: 22,
+    color: '#2D3A4B',
     marginBottom: 20,
     textAlign: 'center',
-    color: '#333',
   },
-  infoContainer: {
-    backgroundColor: '#C2E0C0',
-    borderRadius: 12,
+  card: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
   },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 15,
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  detailIcon: {
+    marginRight: 15,
   },
-  label: {
-    fontWeight: '600',
-    fontSize: 16,
-    color: '#333',
+  detailTextContainer: {
     flex: 1,
   },
-  value: {
+  detailLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  detailValue: {
     fontSize: 16,
-    color: '#333',
-    flex: 2,
-    flexWrap: 'wrap',
-    lineHeight: 22,
+    color: '#2D3A4B',
+    fontWeight: '500',
   },
   mapButton: {
-    backgroundColor: '#28A745', 
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginTop: 0,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginVertical: 15,
+  },
+  mapImage: {
+    height: 150,
+    width: '100%',
+  },
+  mapOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(40, 167, 69, 0.9)',
+    flexDirection: 'row',
     alignItems: 'center',
-    flexDirection: 'row', // Align icon and text horizontally
-    justifyContent: 'center', // Center the content
-    elevation: 2, // Add subtle shadow
+    justifyContent: 'center',
+    padding: 12,
   },
   mapButtonText: {
+    color: '#FFF',
     fontSize: 16,
-    color: '#fff',
-    marginLeft: 8, // Space between icon and text
+    fontWeight: '600',
+    marginLeft: 8,
   },
-  mapButtonIcon: {
-    fontSize: 18,
-    color: '#fff',
-    marginRight: 8, // Space between icon and text
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 10,
   },
-  actionButtons: {
+  detailBox: {
+    width: '48%',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 12,
+  },
+  actionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 25,
   },
-  editButton: {
-    backgroundColor: '#007BFF',
+  actionButton: {
     flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    flex: 0.45,
+    width: '48%',
+    justifyContent: 'center',
   },
-  deleteButton: {
-    backgroundColor: '#DC3545',
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    flex: 0.45,
-  },
-  icon: {
-    marginRight: 8,
-  },
-  buttonText: {
+  actionButtonText: {
+    color: '#FFF',
     fontSize: 16,
-    color: '#fff',
     fontWeight: '600',
+    marginLeft: 8,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+    backgroundColor: '#F8F9FA',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff4444',
+    marginTop: 15,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
+
+export default PlaceView;

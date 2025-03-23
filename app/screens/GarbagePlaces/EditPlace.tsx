@@ -1,40 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, SafeAreaView, ActivityIndicator } from 'react-native';
-import { FIREBASE_DB } from '../../../Firebase_Config'; 
-import { doc, getDoc, updateDoc } from 'firebase/firestore'; 
+import { 
+  ScrollView, 
+  StyleSheet, 
+  Text, 
+  TextInput, 
+  View, 
+  TouchableOpacity, 
+  Alert, 
+  SafeAreaView, 
+  ActivityIndicator 
+} from 'react-native';
+import { FIREBASE_DB } from '../../../Firebase_Config';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import AdminNav from '../../Components/AdminNav';
 import Header from '../../Components/HeaderAdmin';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const EditPlace = ({ route, navigation }) => {
-  const { id } = route.params; // Get the id from the navigation route params
-  const [locationName, setLocationName] = useState('');
-  const [address, setAddress] = useState('');
-  const [wasteType, setWasteType] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [contactPerson, setContactPerson] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+interface EditPlaceProps {
+  route: any;
+  navigation: any;
+}
+
+interface FormState {
+  locationName: string;
+  address: string;
+  wasteType: string;
+  capacity: string;
+  contactPerson: string;
+  phoneNumber: string;
+}
+
+const EditPlace: React.FC<EditPlaceProps> = ({ route, navigation }) => {
+  const { id } = route.params;
+  const [formState, setFormState] = useState<FormState>({
+    locationName: '',
+    address: '',
+    wasteType: '',
+    capacity: '',
+    contactPerson: '',
+    phoneNumber: ''
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // Fetch the existing data for the garbage place
     const fetchGarbagePlace = async () => {
       setLoading(true);
       try {
-        const garbagePlaceDoc = doc(FIREBASE_DB, 'GarbagePlaces', id);
-        const docSnap = await getDoc(garbagePlaceDoc);
+        const docRef = doc(FIREBASE_DB, 'GarbagePlaces', id);
+        const docSnap = await getDoc(docRef);
+        
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setLocationName(data.locationName);
-          setAddress(data.address);
-          setWasteType(data.wasteType);
-          setCapacity(data.capacity);
-          setContactPerson(data.contactPerson);
-          setPhoneNumber(data.phoneNumber);
-        } else {
-          Alert.alert('Error', 'No such document!');
+          setFormState({
+            locationName: data.locationName,
+            address: data.address,
+            wasteType: data.wasteType,
+            capacity: data.capacity.toString(),
+            contactPerson: data.contactPerson,
+            phoneNumber: data.phoneNumber
+          });
         }
       } catch (error) {
-        Alert.alert('Error', 'Error fetching garbage place details: ' + error.message);
+        Alert.alert('Error', 'Failed to load location details');
       } finally {
         setLoading(false);
       }
@@ -43,185 +72,297 @@ const EditPlace = ({ route, navigation }) => {
     fetchGarbagePlace();
   }, [id]);
 
-  // Function to validate the form data
-  const validateForm = () => {
-    if (!locationName.trim()) {
-      Alert.alert('Error', 'Location Name is required and cannot be empty.');
-      return false;
+  const validateField = (name: string, value: string) => {
+    let error = '';
+    
+    switch (name) {
+      case 'locationName':
+        if (!value.trim()) error = 'Location name is required';
+        else if (!/^[A-Za-z\s\-']+$/.test(value)) 
+          error = 'Invalid characters in location name';
+        break;
+        
+      case 'address':
+        if (!value.trim()) error = 'Address is required';
+        break;
+        
+      case 'wasteType':
+        if (!value.trim()) error = 'Waste type is required';
+        break;
+        
+      case 'capacity':
+        if (!value) error = 'Capacity is required';
+        else if (isNaN(Number(value)) || Number(value) <= 0) 
+          error = 'Must be a positive number';
+        break;
+        
+      case 'contactPerson':
+        if (!value.trim()) error = 'Contact person is required';
+        else if (!/^[A-Za-z\s\-'.]+$/.test(value)) 
+          error = 'Invalid name format';
+        break;
+        
+      case 'phoneNumber':
+        const phoneError = validatePhoneNumber(value);
+        if (phoneError) error = phoneError;
+        break;
     }
-    if (!/^[A-Za-z\s]+$/.test(locationName.trim())) {
-      Alert.alert('Error', 'Location Name can only contain letters and spaces.');
-      return false;
-    }
+    
+    setErrors(prev => ({ ...prev, [name]: error }));
+    return !error;
+  };
 
-    if (!address.trim()) {
-      Alert.alert('Error', 'Address is required.');
-      return false;
-    }
+  const validatePhoneNumber = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (!cleaned) return 'Phone number is required';
+    if (cleaned.length !== 10) return 'Must be 10 digits';
+    if (!cleaned.startsWith('0')) return 'Must start with 0';
+    if (!/^\d+$/.test(cleaned)) return 'Only numbers allowed';
+    
+    const validPrefixes = ['070', '071', '072', '074', '075', '076', '077', '078'];
+    const prefix = cleaned.substring(0, 3);
+    if (!validPrefixes.includes(prefix)) return 'Invalid mobile prefix';
+    
+    return '';
+  };
 
-    if (!wasteType.trim()) {
-      Alert.alert('Error', 'Waste Type is required.');
-      return false;
+  const handleChange = (name: keyof FormState, value: string) => {
+    if (name === 'phoneNumber') {
+      const formatted = value
+        .replace(/\D/g, '')
+        .replace(/(\d{3})(\d{0,3})(\d{0,4})/, (_, p1, p2, p3) => {
+          let result = p1;
+          if (p2) result += ` ${p2}`;
+          if (p3) result += ` ${p3}`;
+          return result;
+        })
+        .slice(0, 12);
+      value = formatted;
     }
-
-    if (!capacity || isNaN(capacity) || capacity <= 0) {
-      Alert.alert('Error', 'Capacity must be a positive number.');
-      return false;
-    }
-
-    if (!contactPerson.trim()) {
-      Alert.alert('Error', 'Contact Person is required.');
-      return false;
-    }
-    if (!/^[A-Za-z\s]+$/.test(contactPerson.trim())) {
-      Alert.alert('Error', 'Contact Person can only contain letters and spaces.');
-      return false;
-    }
-
-    if (!/^\d{10}$/.test(phoneNumber)) {
-      Alert.alert('Error', 'Phone Number must be a 10-digit number.');
-      return false;
-    }
-
-    return true;
+    
+    setFormState(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) validateField(name, value);
   };
 
   const handleSubmit = async () => {
-    // Validate form before submitting
-    if (!validateForm()) return;
-
-    setLoading(true);
-    try {
-      // Update the document in Firestore
-      const garbagePlaceDoc = doc(FIREBASE_DB, 'GarbagePlaces', id);
-      await updateDoc(garbagePlaceDoc, {
-        locationName,
-        address,
-        wasteType,
-        capacity,
-        contactPerson,
-        phoneNumber,
-      });
-      Alert.alert('Success', 'Garbage place updated successfully!');
-      navigation.goBack(); 
-    } catch (error) {
-      Alert.alert('Error', 'Error updating garbage place: ' + error.message);
-    } finally {
-      setLoading(false);
+    const validations = Object.entries(formState).map(([key, value]) => 
+      validateField(key, value)
+    );
+    
+    if (validations.every(v => v)) {
+      setSubmitting(true);
+      try {
+        await updateDoc(doc(FIREBASE_DB, 'GarbagePlaces', id), formState);
+        Alert.alert('Success', 'Location updated successfully!');
+        navigation.goBack();
+      } catch (error) {
+        Alert.alert('Error', 'Failed to update location. Please try again.');
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#28A745" />
+        <Text style={styles.loadingText}>Loading Location Details...</Text>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container}>
       <Header />
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>Edit Location Details</Text>
-        <View style={styles.frame}>
-          <Text style={styles.label}>Location Name</Text>
-          <TextInput
-            style={styles.input}
-            value={locationName}
-            onChangeText={setLocationName}
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.header}>Edit EcoBin Location</Text>
+        
+        <View style={styles.formContainer}>
+          <FormInput
+            label="Location Name"
+            icon="place"
+            value={formState.locationName}
+            onChange={(v) => handleChange('locationName', v)}
+            error={errors.locationName}
           />
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            style={styles.input}
-            value={address}
-            onChangeText={setAddress}
+          
+          <FormInput
+            label="Address"
+            icon="location-pin"
+            value={formState.address}
+            onChange={(v) => handleChange('address', v)}
+            error={errors.address}
           />
-          <Text style={styles.label}>Waste Type</Text>
-          <TextInput
-            style={styles.input}
-            value={wasteType}
-            onChangeText={setWasteType}
+          
+          <FormInput
+            label="Waste Type"
+            icon="delete"
+            value={formState.wasteType}
+            onChange={(v) => handleChange('wasteType', v)}
+            error={errors.wasteType}
           />
-          <Text style={styles.label}>Capacity</Text>
-          <TextInput
-            style={styles.input}
-            value={capacity}
-            onChangeText={setCapacity}
+          
+          <FormInput
+            label="Capacity (kg)"
+            icon="storage"
+            value={formState.capacity}
+            onChange={(v) => handleChange('capacity', v)}
             keyboardType="numeric"
+            error={errors.capacity}
           />
-          <Text style={styles.label}>Contact Person</Text>
-          <TextInput
-            style={styles.input}
-            value={contactPerson}
-            onChangeText={setContactPerson}
+          
+          <FormInput
+            label="Contact Person"
+            icon="person"
+            value={formState.contactPerson}
+            onChange={(v) => handleChange('contactPerson', v)}
+            error={errors.contactPerson}
           />
-          <Text style={styles.label}>Contact Number</Text>
-          <TextInput
-            style={styles.input}
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
+          
+          <FormInput
+            label="Contact Number"
+            icon="phone"
+            value={formState.phoneNumber}
+            onChange={(v) => handleChange('phoneNumber', v)}
             keyboardType="phone-pad"
+            error={errors.phoneNumber}
+            maxLength={12}
           />
         </View>
-        
-        {loading ? (
-          <ActivityIndicator size="large" color="#28A745" />
-        ) : (
-          <TouchableOpacity style={styles.btn} onPress={handleSubmit}>
-            <Text style={styles.btnText}>Submit</Text>
-          </TouchableOpacity>
-        )}
+
+        <TouchableOpacity 
+          style={styles.submitButton} 
+          onPress={handleSubmit}
+          disabled={submitting}
+        >
+          {submitting ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <>
+              <Icon name="save" size={20} color="#FFF" />
+              <Text style={styles.submitButtonText}>Save Changes</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </ScrollView>
       <AdminNav />
     </SafeAreaView>
   );
 };
 
-export default EditPlace;
+const FormInput = ({ 
+  label, 
+  icon, 
+  value, 
+  onChange, 
+  error, 
+  keyboardType = 'default', 
+  maxLength 
+}) => (
+  <View style={styles.inputContainer}>
+    <View style={styles.labelContainer}>
+      <Icon name={icon} size={18} color="#666" />
+      <Text style={styles.inputLabel}>{label}</Text>
+    </View>
+    
+    <TextInput
+      style={[styles.input, error && styles.inputError]}
+      value={value}
+      onChangeText={onChange}
+      keyboardType={keyboardType}
+      maxLength={maxLength}
+    />
+    
+    {error && <Text style={styles.errorText}>{error}</Text>}
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  content: {
     padding: 20,
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%',
-    justifyContent: 'space-between',
-    backgroundColor: '#EFF6F0',
+    paddingBottom: 40,
   },
   header: {
+    fontSize: 24,
     fontWeight: '700',
-    fontSize: 22,
-    marginBottom: 20,
+    color: '#2D3A4B',
     textAlign: 'center',
+    marginBottom: 25,
   },
-  label: {
-    fontSize: 18,
+  formContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
+  inputLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
   input: {
-    height: 40,
-    borderColor: '#FFFFFF',
+    height: 48,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    marginBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 5,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#2D3A4B',
+    backgroundColor: '#FFF',
   },
-  btn: {
-    backgroundColor: '#28A745',
-    padding: 10,
+  inputError: {
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  submitButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '50%',
+    justifyContent: 'center',
+    backgroundColor: '#28A745',
     borderRadius: 10,
-    alignSelf: 'center',
+    padding: 16,
+    marginTop: 25,
+    gap: 12,
   },
-  btnText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  submitButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  frame: {
-    width: '100%',
-    backgroundColor: '#C2E0C0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 20,
-    justifyContent: 'space-between',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#666',
   },
 });
+
+export default EditPlace;
