@@ -13,7 +13,7 @@ const DisplayScreen = ({ route }) => {
   const analyzeImage = async (imageUri) => {
     setLoading(true); 
     try {
-      const genAI = new GoogleGenerativeAI("AIzaSyBDD4et7jdY027ZMgbDFOjc2XJ-f1GdD3A");
+      const genAI = new GoogleGenerativeAI("AIzaSyBf7I5bOeT6Tk4I8OsGQhOUgQcVmdgzxRc");
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const response = await fetch(imageUri);
