@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { View, TextInput, TouchableOpacity, Text, ScrollView, StyleSheet, ActivityIndicator, Image } from "react-native";
+import { 
+  View, TextInput, TouchableOpacity, Text, ScrollView, StyleSheet, 
+  ActivityIndicator, Image, KeyboardAvoidingView, Platform 
+} from "react-native";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Google Generative AI SDK
@@ -9,7 +12,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
   systemInstruction:
-    "You are EcoBin Ai, a friendly assistant who works with EcoBin Ai. EcoBin Ai is a mobile app that helps to manage day-to-day garbage collection systems. Your job is to answer user questions related to garbage collection, garbage disposal, and recycling tips, and provide quick answers to waste-related questions. If the user asks anything else, please inform them to ask garbage disposal, collection, or recycling-related questions. Respond in Sinhala if the user asks in Sinhala, using the provided dictionary link to translate words into Sinhala.",
+    "You are EcoBin Ai, a friendly assistant who helps with garbage collection, disposal, and recycling tips. Respond only to relevant queries and in Sinhala if asked.",
 });
 
 const generationConfig = {
@@ -58,40 +61,49 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.header}>EcoBin Ai Chatbot</Text>
-      </View>
-
-      {/* Hide chatbot image when chat has messages */}
-      {messages.length === 0 && (
-        <View style={styles.imageContainer}>
-          <Image source={require("../../assets/chatbot.png")} style={styles.chatbotImage} />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+      style={{ flex: 1 }}
+    >
+      <View style={styles.container}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.header}>EcoBin Ai Chatbot</Text>
         </View>
-      )}
 
-      <ScrollView style={styles.chatContainer}>
-        {messages.map((message, index) => (
-          <View key={index} style={message.role === "user" ? styles.userMessage : styles.botMessage}>
-            <Text style={styles.messageText}>{message.text}</Text>
+        {/* Hide chatbot image when chat has messages */}
+        {messages.length === 0 && (
+          <View style={styles.imageContainer}>
+            <Image source={require("../../assets/chatbot.png")} style={styles.chatbotImage} />
           </View>
-        ))}
-        {loading && <ActivityIndicator size="large" color="#4CAF50" style={styles.spinner} />}
-      </ScrollView>
+        )}
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={userInput}
-          onChangeText={setUserInput}
-          placeholder="Type your message..."
-          placeholderTextColor="#aaa"
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={handleMessageSend}>
-          <Image source={require("../../assets/Vector.png")} style={styles.sendButtonImage} />
-        </TouchableOpacity>
+        <ScrollView 
+          style={styles.chatContainer} 
+          contentContainerStyle={{ flexGrow: 1 }} 
+          keyboardShouldPersistTaps="handled"
+        >
+          {messages.map((message, index) => (
+            <View key={index} style={message.role === "user" ? styles.userMessage : styles.botMessage}>
+              <Text style={styles.messageText}>{message.text}</Text>
+            </View>
+          ))}
+          {loading && <ActivityIndicator size="large" color="#4CAF50" style={styles.spinner} />}
+        </ScrollView>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={userInput}
+            onChangeText={setUserInput}
+            placeholder="Type your message..."
+            placeholderTextColor="#aaa"
+          />
+          <TouchableOpacity style={styles.sendButton} onPress={handleMessageSend}>
+            <Image source={require("../../assets/Vector.png")} style={styles.sendButtonImage} />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -109,7 +121,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   header: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
     textAlign: "center",
@@ -117,11 +129,11 @@ const styles = StyleSheet.create({
   imageContainer: {
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 100,
+    marginVertical: 50,
   },
   chatbotImage: {
-    width: 500,
-    height: 400,
+    width: 300,
+    height: 250,
     resizeMode: "contain",
   },
   chatContainer: {
@@ -130,7 +142,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
-    paddingVertical: 15,
+    paddingVertical: 10,
     paddingHorizontal: 10,
     backgroundColor: "#f0f4f1",
     borderTopWidth: 1,
@@ -163,7 +175,7 @@ const styles = StyleSheet.create({
   userMessage: {
     alignSelf: "flex-end",
     backgroundColor: "#dcf8c6",
-    padding: 15,
+    padding: 12,
     borderRadius: 15,
     marginBottom: 10,
     maxWidth: "80%",
@@ -171,7 +183,7 @@ const styles = StyleSheet.create({
   botMessage: {
     alignSelf: "flex-start",
     backgroundColor: "#e0e0e0",
-    padding: 15,
+    padding: 12,
     borderRadius: 15,
     marginBottom: 10,
     maxWidth: "80%",
