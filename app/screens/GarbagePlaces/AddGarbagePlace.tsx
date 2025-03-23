@@ -169,84 +169,92 @@ const AddGarbagePlace = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container}>
       <Header />
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>Add New EcoBin Location</Text>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.header}>Add New EcoBin</Text>
 
-        <View style={styles.form}>
+        <View style={styles.formContainer}>
           <Input
             label="Location Name"
-            icon="place"
+            icon="location-on"
             value={formData.locationName}
             onChange={(v) => handleInputChange('locationName', v)}
             error={validationErrors.locationName}
-            placeholder="EcoBin Central Hub"
+            placeholder="Central Recycling Hub"
           />
 
           <Input
-            label="Address"
-            icon="location-pin"
+            label="Full Address"
+            icon="place"
             value={formData.address}
             onChange={(v) => handleInputChange('address', v)}
             error={validationErrors.address}
-            placeholder="123 Green Street"
+            placeholder="123 Green Street, EcoCity"
           />
 
-          <Input
-            label="Type of Waste"
-            icon="delete"
-            value={formData.wasteType}
-            onChange={(v) => handleInputChange('wasteType', v)}
-            error={validationErrors.wasteType}
-            placeholder="Recyclables, Organic, etc."
-          />
+          <View style={styles.row}>
+            <View style={styles.inputGroup}>
+              <Input
+                label="Waste Type"
+                icon="delete"
+                value={formData.wasteType}
+                onChange={(v) => handleInputChange('wasteType', v)}
+                error={validationErrors.wasteType}
+                placeholder="Plastic, Organic, etc."
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Input
+                label="Capacity (kg)"
+                icon="storage"
+                value={formData.capacity}
+                onChange={(v) => handleInputChange('capacity', v)}
+                keyboardType="numeric"
+                error={validationErrors.capacity}
+                placeholder="500"
+              />
+            </View>
+          </View>
 
-          <Input
-            label="Capacity (kg)"
-            icon="storage"
-            value={formData.capacity}
-            onChange={(v) => handleInputChange('capacity', v)}
-            keyboardType="numeric"
-            error={validationErrors.capacity}
-            placeholder="500"
-            maxLength={4}
-          />
-
-          <Input
-            label="Contact Person"
-            icon="person"
-            value={formData.contactPerson}
-            onChange={(v) => handleInputChange('contactPerson', v)}
-            error={validationErrors.contactPerson}
-            placeholder="John Doe"
-          />
-
-          <Input
-            label="Contact Number"
-            icon="phone"
-            value={formData.phoneNumber}
-            onChange={(v) => handleInputChange('phoneNumber', v)}
-            keyboardType="phone-pad"
-            error={validationErrors.phoneNumber}
-            placeholder="077 123 4567"
-            maxLength={12} // 10 digits + 2 spaces
-            format="phone"
-          />
+          <View style={styles.row}>
+            <View style={styles.inputGroup}>
+              <Input
+                label="Contact Person"
+                icon="person"
+                value={formData.contactPerson}
+                onChange={(v) => handleInputChange('contactPerson', v)}
+                error={validationErrors.contactPerson}
+                placeholder="John Doe"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Input
+                label="Contact Number"
+                icon="phone"
+                value={formData.phoneNumber}
+                onChange={(v) => handleInputChange('phoneNumber', v)}
+                keyboardType="phone-pad"
+                error={validationErrors.phoneNumber}
+                placeholder="077 123 4567"
+                format="phone"
+              />
+            </View>
+          </View>
         </View>
 
         <TouchableOpacity 
-          style={styles.button} 
+          style={styles.submitButton} 
           onPress={addPlaceToFirestore}
           disabled={isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <View style={styles.buttonContent}>
+            <>
               <Icon name="add-location" size={20} color="#FFF" />
-              <Text style={styles.buttonText}>Add EcoBin Location</Text>
-            </View>
+              <Text style={styles.submitButtonText}>Add EcoBin Location</Text>
+            </>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -278,140 +286,154 @@ const Input: React.FC<InputProps> = ({
   icon,
   format
 }) => {
-  const getInputStyle = () => {
-    if (error) return [styles.input, styles.inputError];
-    if (format === 'phone' && value.length === 12) return [styles.input, styles.inputValid];
-    return styles.input;
-  };
+  const isPhoneValid = format === 'phone' && value.length === 12;
 
   return (
-    <View style={styles.inputContainer}>
-      <View style={styles.labelContainer}>
-        {icon && <Icon name={icon} size={18} color="#64748B" style={styles.icon} />}
-        <Text style={styles.label}>{label}</Text>
+    <View style={styles.inputWrapper}>
+      <View style={styles.labelRow}>
+        {icon && <Icon name={icon} size={16} color="#64748B" />}
+        <Text style={styles.inputLabel}>{label}</Text>
       </View>
       
-      <TextInput
-        style={getInputStyle()}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor="#94A3B8"
-        keyboardType={keyboardType}
-        maxLength={maxLength}
-      />
+      <View style={[
+        styles.inputContainer,
+        error && styles.inputErrorContainer,
+        isPhoneValid && styles.inputValidContainer
+      ]}>
+        <TextInput
+          style={styles.inputField}
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor="#94A3B8"
+          keyboardType={keyboardType}
+          maxLength={maxLength}
+        />
+        
+        {format === 'phone' && (
+          <View style={styles.phoneStatus}>
+            {error ? (
+              <Icon name="error" size={16} color="#DC2626" />
+            ) : isPhoneValid ? (
+              <Icon name="check-circle" size={16} color="#16A34A" />
+            ) : null}
+          </View>
+        )}
+      </View>
       
-      {format === 'phone' && value.length > 0 && (
-        <View style={styles.phoneMeta}>
-          <Text style={styles.charCounter}>{value.replace(/\D/g, '').length}/10</Text>
-          {error ? (
-            <Icon name="error" size={18} color="#DC2626" />
-          ) : value.length === 12 ? (
-            <Icon name="check-circle" size={18} color="#16A34A" />
-          ) : null}
+      {error && (
+        <View style={styles.errorContainer}>
+          <Icon name="error-outline" size={14} color="#DC2626" />
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
-      
-      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: '#F9FAFB',
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  content: {
+    padding: 24,
+    paddingBottom: 80,
   },
   header: {
-    fontWeight: '700',
     fontSize: 24,
-    marginBottom: 20,
+    fontWeight: '700',
+    color: '#059669',
     textAlign: 'center',
-    color: '#111827',
+    marginBottom: 32,
   },
-  form: {
-    backgroundColor: '#E0F2E9',
-    borderRadius: 12,
-    padding: 20,
+  formContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  inputContainer: {
+  row: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  inputGroup: {
+    flex: 1,
+  },
+  inputWrapper: {
     marginBottom: 20,
   },
-  labelContainer: {
+  labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     marginBottom: 8,
   },
-  icon: {
-    marginRight: 8,
-  },
-  label: {
+  inputLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1F2937',
+    color: '#334155',
   },
-  input: {
-    height: 48,
-    borderColor: '#CBD5E1',
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#1F2937',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 14,
   },
-  inputError: {
+  inputField: {
+    flex: 1,
+    height: 48,
+    fontSize: 16,
+    color: '#1E293B',
+  },
+  inputErrorContainer: {
     borderColor: '#DC2626',
     backgroundColor: '#FEF2F2',
   },
-  inputValid: {
+  inputValidContainer: {
     borderColor: '#16A34A',
     backgroundColor: '#F0FDF4',
+  },
+  phoneStatus: {
+    marginLeft: 8,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
   },
   errorText: {
     color: '#DC2626',
     fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
   },
-  button: {
-    backgroundColor: '#10B981',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    marginTop: 20,
-    alignSelf: 'center',
-    minWidth: '80%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  buttonContent: {
+  submitButton: {
+    backgroundColor: '#059669',
+    borderRadius: 12,
+    padding: 18,
+    marginTop: 24,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  buttonText: {
+  submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  phoneMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  charCounter: {
-    fontSize: 12,
-    color: '#64748B',
   },
 });
 
