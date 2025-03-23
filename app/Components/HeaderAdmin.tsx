@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StatusBar, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StatusBar, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../Firebase_Config';
 import { doc, getDoc } from "firebase/firestore";
-import { useNavigation, StackActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { StackActions } from '@react-navigation/native';
 import userStore from '../Store/userStore';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -21,28 +22,49 @@ const HeaderAdmin: React.FC = () => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             setUser({
-              name: userData.name,
-              email: user.email,
-              uid: ''
+              name: userData.name || 'Admin',
+              email: user.email || '',
+              uid: user.uid
             });
           }
         } catch (error) {
           console.error('Error fetching user details: ', error);
+          Alert.alert('Error', 'Failed to load user data');
         }
       }
     };
     fetchUserData();
-  }, [user]);
+  }, [user, setUser]);
 
-  const logout = () => {
-    FIREBASE_AUTH.signOut()
-      .then(() => {
-        clearUser();
-        navigation.dispatch(StackActions.replace('Signinscreen'));
-      })
-      .catch((error) => {
-        console.error('Error during sign out: ', error);
-      });
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const confirmLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await FIREBASE_AUTH.signOut();
+              clearUser();
+              navigation.dispatch(StackActions.replace('Signinscreen'));
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to sign out');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -50,18 +72,21 @@ const HeaderAdmin: React.FC = () => {
       <StatusBar backgroundColor="#166534" barStyle="light-content" />
       <View style={styles.headerContainer}>
         <View style={styles.userInfo}>
-          <Icon name="account-circle" size={28} color="#fff" />
-          <Text style={styles.adminText}>
-            Welcome, {storedUser?.name || 'Admin'}
-          </Text>
+          <Icon name="account-circle" size={32} color="#fff" />
+          <View style={styles.textContainer}>
+            <Text style={styles.greetingText}>{getGreeting()}</Text>
+            <Text style={styles.adminName}>
+              {storedUser?.name || 'Administrator'}
+            </Text>
+          </View>
         </View>
 
         <TouchableOpacity 
-          style={styles.logoutButton} 
-          onPress={logout}
+          style={styles.logoutButton}
+          onPress={confirmLogout}
           activeOpacity={0.8}
         >
-          <Icon name="logout" size={18} color="#fff" />
+          <Icon name="logout" size={20} color="#fff" />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
@@ -75,7 +100,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     elevation: 4,
     shadowColor: '#000',
@@ -88,19 +113,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  adminText: {
+  textContainer: {
+    marginLeft: 8,
+  },
+  greetingText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '400',
+  },
+  adminName: {
     fontSize: 16,
     color: '#fff',
-    fontWeight: '500',
+    fontWeight: '600',
+    marginTop: 2,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 8,
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   logoutText: {
     fontSize: 14,

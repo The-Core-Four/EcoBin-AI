@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ScrollView, 
   StyleSheet, 
@@ -15,14 +15,9 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from '../../Components/HeaderAdmin';
-import { FIREBASE_DB } from '../../../Firebase_Config';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../../Firebase_Config';
 import { doc, getDoc } from 'firebase/firestore';
 
-// import { useUser } from '../../../contexts/UserContext'; // TODO: Uncomment when user context is implemented
-
-/**
- * Interface defining the structure of a Garbage Place
- */
 interface GarbagePlace {
   id: string;
   locationName: string;
@@ -33,200 +28,169 @@ interface GarbagePlace {
   wasteType: string;
 }
 
-/**
- * Interface for DetailItem component props
- */
 interface DetailItemProps {
   icon: string;
   label: string;
   value: string;
 }
 
-/**
- * Main component for displaying and generating garbage collection points reports
- */
+const DEFAULT_COMPANY_DATA = {
+  name: 'EcoBin AI Waste Management',
+  address: '123 Eco Park Road, Green City',
+  phone: '(94) 112-456789',
+  email: 'info@ecobin.ai',
+  logoURL: 'https://example.com/default-logo.png'
+};
+
 const ReportDetails = () => {
-  // Hooks and state management
   const route = useRoute();
   const { garbagePlaces = [] } = route.params as { garbagePlaces: GarbagePlace[] };
   const [generatingPDF, setGeneratingPDF] = useState(false);
-  // const { user } = useUser(); // TODO: Uncomment when user context is ready
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // PDF Generation Handlers -------------------------------------------------
+  useEffect(() => {
+    if (!FIREBASE_AUTH.currentUser) {
+      Alert.alert('Session Expired', 'Please login again', [
+        { text: 'OK', onPress: () => FIREBASE_AUTH.signOut() }
+      ]);
+    }
+    setAuthChecked(true);
+  }, []);
 
-  /**
-   * Generates PDF report and shares it using device's sharing capabilities
-   */
   const generatePDF = async () => {
+    if (!FIREBASE_AUTH.currentUser) return;
+    
     setGeneratingPDF(true);
     try {
-      // Fetch company information from Firestore
-      const companySnap = await getDoc(doc(FIREBASE_DB, 'company/EcoBinAI'));
+      const companyRef = doc(FIREBASE_DB, 'company/EcoBinAI');
+      const companySnap = await getDoc(companyRef);
+
+      const companyData = companySnap.exists() 
+        ? { ...companySnap.data(), logoURL: companySnap.data().logoURL || DEFAULT_COMPANY_DATA.logoURL }
+        : DEFAULT_COMPANY_DATA;
+
+      const htmlContent = `
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial; margin: 20px; }
+              header { border-bottom: 2px solid #10B981; padding-bottom: 20px; margin-bottom: 30px; }
+              .logo { height: 80px; margin-right: 20px; }
+              table { width: 100%; border-collapse: collapse; }
+              th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+              th { background-color: #f8fafc; }
+            </style>
+          </head>
+          <body>
+            <header>
+              ${companyData.logoURL ? `<img src="${companyData.logoURL}" class="logo">` : ''}
+              <div>
+                <h1>${companyData.name}</h1>
+                <p>${companyData.address}</p>
+                <p>Tel: ${companyData.phone} | Email: ${companyData.email}</p>
+              </div>
+            </header>
+            
+            <h2>Garbage Collection Points Report</h2>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Location</th>
+                  <th>Address</th>
+                  <th>Capacity</th>
+                  <th>Contact</th>
+                  <th>Phone</th>
+                  <th>Waste Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${garbagePlaces.map(place => `
+                  <tr>
+                    <td>${place.locationName}</td>
+                    <td>${place.address}</td>
+                    <td>${place.capacity}kg</td>
+                    <td>${place.contactPerson}</td>
+                    <td>${place.phoneNumber}</td>
+                    <td>${place.wasteType}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
       
-      // Validate company data exists
-      if (!companySnap.exists()) {
-        throw new Error('Company information not found in database');
-      }
-      const companyData = companySnap.data();
-  
-      // Generate PDF content
-      const htmlContent = createPDFContent(
-        garbagePlaces, 
-        companyData,
-        // user // TODO: Uncomment when user context is implemented
-      );
-  
-      // Create PDF file
-      const { uri } = await Print.printToFileAsync({ 
-        html: htmlContent,
-        width: 794,   // A4 width in pixels (210mm)
-        height: 1123, // A4 height in pixels (297mm)
-      });
-  
-      // Share the generated PDF
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           dialogTitle: 'Share EcoBin Report',
-          mimeType: 'application/pdf',
-          UTI: 'com.adobe.pdf',
-          orientation: Print.PrintOptionsOrientation.Portrait
+          mimeType: 'application/pdf'
         });
       }
     } catch (error) {
-      let errorMessage = 'Failed to generate report. Please try again.';
-      
-      // Handle specific error cases
-      if (error.code === 'permission-denied') {
-        errorMessage = 'You don\'t have permission to generate reports';
-      } else if (error.message.includes('Company information')) {
-        errorMessage = 'Company data not configured properly';
-      }
-      
-      console.error('PDF Generation Error:', error);
-      Alert.alert('Error', errorMessage);
+      handlePDFError(error);
     } finally {
       setGeneratingPDF(false);
     }
   };
 
-  // PDF Content Creation ----------------------------------------------------
+  const handlePDFError = (error: any) => {
+    let errorMessage = 'Failed to generate report. Please try again.';
+    
+    if (error.code === 'permission-denied') {
+      errorMessage = 'You need admin privileges to generate reports';
+    } else if (error.message.includes('network')) {
+      errorMessage = 'Network error. Please check your internet connection';
+    }
+    
+    Alert.alert('Error', errorMessage);
+    console.error('PDF Generation Error:', error);
+  };
 
-  /**
-   * Creates HTML content for PDF generation
-   */
-  const createPDFContent = (
-    places: GarbagePlace[], 
-    company: any, 
-    /* user: any // TODO: Add user parameter when implemented */
-  ) => `
-    <html>
-      <head>
-        <style>
-          ${PDF_STYLES}
-        </style>
-      </head>
-      <body>
-        <!-- Company Header -->
-        <header>
-          ${company?.logoURL ? `
-            <img src="${company.logoURL}" 
-                 class="logo" 
-                 alt="EcoBin AI Logo">` : ''}
-          <div class="company-info">
-            <h1>${company?.name || 'EcoBin AI Waste Management'}</h1>
-            <p>${company?.address || '123 Eco Park Road, Green City'}</p>
-            <p>Tel: ${company?.phone || '(94) 112-456789'} | 
-               Email: ${company?.email || 'info@ecobin.ai'}</p>
-          </div>
-        </header>
-
-        <!-- Report Metadata -->
-        <div class="report-meta">
-          <h2>GARBAGE COLLECTION POINTS REPORT</h2>
-          <p>Generated: ${new Date().toLocaleString()}</p>
-          <!-- TODO: Add user display name when implemented -->
-          <!-- <p>Generated by: ${/* user?.displayName || */ 'System Administrator'}</p> -->
-        </div>
-
-        <!-- Main Data Table -->
-        ${renderPDFTable(places)}
-
-        <!-- Report Footer -->
-        ${PDF_FOOTER}
-      </body>
-    </html>
-  `;
-
-  /**
-   * Renders the PDF table with garbage place data
-   */
-  const renderPDFTable = (places: GarbagePlace[]) => `
-    <table>
-      <thead>
-        <tr>
-          ${['Location', 'Address', 'Capacity', 'Contact', 'Phone', 'Waste Type']
-            .map(h => `<th>${h}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>
-        ${places.map(place => `
-          <tr>
-            <td>${place.locationName}</td>
-            <td>${place.address}</td>
-            <td>${place.capacity}kg</td>
-            <td>${place.contactPerson}</td>
-            <td>${place.phoneNumber}</td>
-            <td>${place.wasteType}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-
-  // UI Components -----------------------------------------------------------
-
-  /**
-   * DetailItem component for consistent information display
-   */
   const DetailItem: React.FC<DetailItemProps> = ({ icon, label, value }) => (
     <View style={styles.detailItem}>
-      <Icon name={icon} size={16} color="#4B5563" />
+      <Icon name={icon} size={20} color="#4B5563" />
       <Text style={styles.detailLabel}>{label}:</Text>
       <Text style={styles.detailValue}>{value}</Text>
     </View>
   );
 
-  /**
-   * Handles opening addresses in maps application
-   */
   const openInMaps = (address: string) => {
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`)
-      .catch(() => Alert.alert('Error', 'Could not open maps application'));
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`);
   };
 
-  // Render ------------------------------------------------------------------
+  if (!authChecked) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#10B981" />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>EcoBin Collection Points Report</Text>
+        <Text style={styles.title}>Waste Management Report</Text>
         
         {garbagePlaces.length > 0 ? (
           garbagePlaces.map((place) => (
             <View key={place.id} style={styles.card}>
-              {/* Location Name and Address */}
-              <Text style={styles.cardTitle}>{place.locationName}</Text>
+              <Text style={styles.location}>{place.locationName}</Text>
+              
               <TouchableOpacity 
-                style={styles.addressContainer}
+                style={styles.address} 
                 onPress={() => openInMaps(place.address)}
               >
-                <Icon name="place" size={16} color="#2563EB" />
+                <Icon name="place" size={16} color="#3B82F6" />
                 <Text style={styles.addressText}>{place.address}</Text>
               </TouchableOpacity>
 
-              {/* Detail Information Grid */}
-              <View style={styles.detailsGrid}>
+              <View style={styles.details}>
                 <DetailItem icon="storage" label="Capacity" value={`${place.capacity}kg`} />
                 <DetailItem icon="person" label="Contact" value={place.contactPerson} />
                 <DetailItem icon="phone" label="Phone" value={place.phoneNumber} />
@@ -235,19 +199,16 @@ const ReportDetails = () => {
             </View>
           ))
         ) : (
-          // Empty State
           <View style={styles.emptyState}>
-            <Icon name="assignment" size={40} color="#CBD5E1" />
-            <Text style={styles.emptyText}>No collection points available</Text>
-            <Text style={styles.emptySubtext}>Add locations to generate reports</Text>
+            <Icon name="warning" size={40} color="#94A3B8" />
+            <Text style={styles.emptyText}>No data available for report</Text>
           </View>
         )}
       </ScrollView>
 
-      {/* PDF Generation Button */}
       {garbagePlaces.length > 0 && (
         <TouchableOpacity 
-          style={styles.downloadButton}
+          style={styles.pdfButton}
           onPress={generatePDF}
           disabled={generatingPDF}
         >
@@ -256,125 +217,64 @@ const ReportDetails = () => {
           ) : (
             <>
               <Icon name="picture-as-pdf" size={20} color="#FFF" />
-              <Text style={styles.downloadButtonText}>Generate PDF Report</Text>
+              <Text style={styles.pdfButtonText}>Generate PDF</Text>
             </>
           )}
         </TouchableOpacity>
+      )}
+
+      {generatingPDF && (
+        <View style={styles.overlay}>
+          <ActivityIndicator size="large" color="#10B981" />
+          <Text style={styles.generatingText}>Creating Report...</Text>
+        </View>
       )}
     </SafeAreaView>
   );
 };
 
-// PDF Styling ---------------------------------------------------------------
-const PDF_STYLES = `
-  body {
-    font-family: 'Helvetica', sans-serif;
-    margin: 2cm;
-    color: #1F2937;
-  }
-
-  header {
-    display: flex;
-    align-items: center;
-    border-bottom: 2px solid #10B981;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
-  }
-
-  .logo {
-    height: 80px;
-    margin-right: 20px;
-  }
-
-  .company-info h1 {
-    font-size: 24px;
-    color: #111827;
-    margin: 0 0 4px 0;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 25px 0;
-  }
-
-  th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #E5E7EB;
-  }
-
-  th {
-    background-color: #F3F4F6;
-    font-weight: 600;
-  }
-
-  tr:nth-child(even) {
-    background-color: #F9FAFB;
-  }
-`;
-
-const PDF_FOOTER = `
-  <footer>
-    <div class="signature">
-      <p>Authorized Signature:</p>
-      <div class="signature-line"></div>
-    </div>
-    <p class="disclaimer">
-      This report contains sensitive information intended for internal use only.
-      Unauthorized distribution is prohibited.
-    </p>
-  </footer>
-`;
-
-// Component Styles ----------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC'
   },
   content: {
-    padding: 20,
-    paddingBottom: 100,
+    padding: 16,
+    paddingBottom: 100
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 25,
+    marginBottom: 24
   },
   card: {
     backgroundColor: '#FFF',
     borderRadius: 12,
-    padding: 18,
+    padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    elevation: 2
   },
-  cardTitle: {
+  location: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 12,
+    marginBottom: 8
   },
-  addressContainer: {
+  address: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 16
   },
   addressText: {
-    color: '#2563EB',
-    marginLeft: 8,
-    fontSize: 14,
+    color: '#3B82F6',
+    marginLeft: 8
   },
-  detailsGrid: {
+  details: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 12
   },
   detailItem: {
     flexDirection: 'row',
@@ -382,57 +282,57 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     borderRadius: 8,
     padding: 12,
-    minWidth: '48%',
-    flexGrow: 1,
+    minWidth: '48%'
   },
   detailLabel: {
-    color: '#4B5563',
-    fontSize: 12,
+    color: '#6B7280',
     marginLeft: 8,
-    marginRight: 4,
+    marginRight: 4
   },
   detailValue: {
     color: '#1F2937',
-    fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '500'
   },
-  downloadButton: {
+  pdfButton: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
+    bottom: 24,
+    left: 24,
+    right: 24,
     backgroundColor: '#10B981',
     borderRadius: 8,
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    gap: 12
   },
-  downloadButtonText: {
+  pdfButtonText: {
     color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   emptyState: {
     alignItems: 'center',
-    padding: 40,
+    padding: 40
   },
   emptyText: {
-    fontSize: 16,
-    color: '#6B7280',
+    color: '#64748B',
+    marginTop: 16
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  generatingText: {
     marginTop: 16,
+    color: '#1F2937'
   },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginTop: 8,
-  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
 });
 
 export default ReportDetails;

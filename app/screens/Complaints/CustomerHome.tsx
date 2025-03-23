@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import CustomerNav from '../../Components/CustomerNav';
 import Header from '../../Components/HeaderCustomer';
-
+import userStore from '../../Store/userStore';
 
 const hero = require('../../../assets/homeHero.jpg');
 const add = require('../../../assets/add.png');
@@ -12,37 +12,99 @@ const list = require('../../../assets/list.png');
 const bin = require('../../../assets/nav (2).png');
 
 const CustomerHome: React.FC = () => {
-  const navigation = useNavigation<any>(); // You can replace 'any' with specific type if needed
+  const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
+  const { user } = userStore();
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+
+  // Simulated data loading
+  useEffect(() => {
+    if (isFocused) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        setLastUpdated(new Date().toLocaleTimeString());
+      }, 1500);
+    }
+  }, [isFocused]);
+
+  const handleNavigation = (screen: string) => {
+    if (!user) {
+      Alert.alert('Session Expired', 'Please login again');
+      navigation.navigate('Signinscreen');
+      return;
+    }
+    
+    setLoading(true);
+    navigation.navigate(screen);
+  };
+
+  const RefreshIndicator = () => (
+    <View style={styles.refreshContainer}>
+      <Text style={styles.refreshText}>Last updated: {lastUpdated}</Text>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2E7D32" />
+          <Text style={styles.loadingText}>Loading Dashboard...</Text>
+        </View>
+        <CustomerNav />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-       <Header />
-      <View style={styles.innerContainer}>
-        <Image source={hero} style={styles.topImage} />
-        <ScrollView>
-        <View style={styles.gridContainer}>
-          <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('AddComplaint')}>
-            <Image source={add} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>Add Complaint</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('ComplaintList')}>
-            <Image source={list} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>View Complaints</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('UpdateDeleteComplaint')}>
-            <Image source={edit} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>Manage Complaints</Text>
-          </TouchableOpacity>
+      <Header />
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshIndicator />
+        }
+      >
+        <View style={styles.innerContainer}>
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeText}>Welcome back, {user?.name || 'Guest'}!</Text>
+            <Text style={styles.statusText}>All systems operational</Text>
+          </View>
 
-          <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('UserGarbage')}>
-            <Image source={bin} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>View Garbage Places</Text>
-          </TouchableOpacity>
+          <Image 
+            source={hero} 
+            style={styles.topImage} 
+            resizeMode="cover"
+          />
+
+          <View style={styles.gridContainer}>
+            {[
+              { screen: 'AddComplaint', icon: add, title: 'New Complaint', subtitle: 'Report a new issue' },
+              { screen: 'ComplaintList', icon: list, title: 'My Complaints', subtitle: 'View your submissions' },
+              { screen: 'UpdateDeleteComplaint', icon: edit, title: 'Manage Complaints', subtitle: 'Edit or remove entries' },
+              { screen: 'UserGarbage', icon: bin, title: 'Waste Locations', subtitle: 'Find disposal sites' },
+            ].map((item, index) => (
+              <TouchableOpacity 
+                key={index}
+                style={styles.gridItem} 
+                onPress={() => handleNavigation(item.screen)}
+                activeOpacity={0.9}
+                disabled={loading}
+              >
+                <View style={styles.iconContainer}>
+                  <Image source={item.icon} style={styles.buttonImage} />
+                </View>
+                <Text style={styles.buttonText}>{item.title}</Text>
+                <Text style={styles.subText}>{item.subtitle}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-        </ScrollView>
-      </View>
+      </ScrollView>
       <CustomerNav />
     </SafeAreaView>
   );
@@ -51,48 +113,96 @@ const CustomerHome: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor:'#E8F5E9',
+    backgroundColor: '#F8FCF9',
+  },
+  scrollContainer: {
+    flexGrow: 1,
   },
   innerContainer: {
     flex: 1,
-    margin: 20,
-    paddingBottom: 20, // Add padding to the bottom to ensure even spacing
+    marginHorizontal: 16,
+    marginBottom: 20,
+  },
+  welcomeContainer: {
+    marginVertical: 16,
+    paddingHorizontal: 8,
+  },
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#1B5E20',
+    marginBottom: 4,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#81C784',
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    color: '#2E7D32',
+    fontSize: 16,
   },
   topImage: {
     width: '100%',
-    height: 300,
-    borderRadius: 15,
-    marginBottom: 10,
+    height: 200,
+    borderRadius: 12,
+    marginVertical: 16,
   },
   gridContainer: {
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   gridItem: {
-    width: '100%',
-    aspectRatio: 3,
-    marginBottom: 20, // Ensure even spacing between items
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 15,
-    padding: 15,
-    shadowColor: '#000',
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  iconContainer: {
+    backgroundColor: '#E8F5E9',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
   },
   buttonImage: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
+    width: 48,
+    height: 48,
+    tintColor: '#2E7D32',
   },
   buttonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F96D2B',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1B5E20',
     textAlign: 'center',
+    marginVertical: 4,
+  },
+  subText: {
+    fontSize: 12,
+    color: '#81C784',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  refreshContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  refreshText: {
+    fontSize: 12,
+    color: '#81C784',
   },
 });
 

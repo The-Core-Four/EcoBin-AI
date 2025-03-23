@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Smart_Waste",
-    "slug": "Smart_Waste",
+    "name": "EcoBin_Ai",
+    "slug": "EcoBin_Ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,14 +9,10 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
-      "permissions": [
-      "mediaLibrary",
-      "writeExternalStorage",
-      "readExternalStorage"
-    ]
+      "backgroundColor": "#ffffff"
     },
     "ios": {
+      "newArchEnabled": true,
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location.",
@@ -24,6 +20,7 @@
       }
     },
     "android": {
+      "newArchEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -36,8 +33,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
-  
-    
+    },
+    "plugins": [
+      "expo-location"
+    ],
+    "permissions": [
+      "mediaLibrary",
+      "writeExternalStorage",
+      "readExternalStorage"
+    ]
   }
 }
