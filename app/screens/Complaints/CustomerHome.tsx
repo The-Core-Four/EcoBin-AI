@@ -4,7 +4,6 @@ import { useNavigation } from '@react-navigation/native';
 import CustomerNav from '../../Components/CustomerNav';
 import Header from '../../Components/HeaderCustomer';
 
-
 const hero = require('../../../assets/homeHero.jpg');
 const add = require('../../../assets/add.png');
 const edit = require('../../../assets/edit.png');
@@ -12,37 +11,66 @@ const list = require('../../../assets/list.png');
 const bin = require('../../../assets/nav (2).png');
 
 const CustomerHome: React.FC = () => {
-  const navigation = useNavigation<any>(); // You can replace 'any' with specific type if needed
+  const navigation = useNavigation<any>();
 
   return (
     <SafeAreaView style={styles.container}>
-       <Header />
-      <View style={styles.innerContainer}>
-        <Image source={hero} style={styles.topImage} />
-        <ScrollView>
-        <View style={styles.gridContainer}>
-          <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('AddComplaint')}>
-            <Image source={add} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>Add Complaint</Text>
-          </TouchableOpacity>
+      <Header />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.innerContainer}>
+          <Image source={hero} style={styles.topImage} />
           
-          <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('ComplaintList')}>
-            <Image source={list} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>View Complaints</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('UpdateDeleteComplaint')}>
-            <Image source={edit} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>Manage Complaints</Text>
-          </TouchableOpacity>
+          <View style={styles.gridContainer}>
+            <TouchableOpacity 
+              style={styles.gridItem} 
+              onPress={() => navigation.navigate('AddComplaint')}
+              activeOpacity={0.9}
+            >
+              <View style={styles.iconContainer}>
+                <Image source={add} style={styles.buttonImage} />
+              </View>
+              <Text style={styles.buttonText}>New Complaint</Text>
+              <Text style={styles.subText}>Report a new issue</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={styles.gridItem} onPress={() => navigation.navigate('UserGarbage')}>
-            <Image source={bin} style={styles.buttonImage} />
-            <Text style={styles.buttonText}>View Garbage Places</Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.gridItem} 
+              onPress={() => navigation.navigate('ComplaintList')}
+              activeOpacity={0.9}
+            >
+              <View style={styles.iconContainer}>
+                <Image source={list} style={styles.buttonImage} />
+              </View>
+              <Text style={styles.buttonText}>My Complaints</Text>
+              <Text style={styles.subText}>View your submissions</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.gridItem} 
+              onPress={() => navigation.navigate('UpdateDeleteComplaint')}
+              activeOpacity={0.9}
+            >
+              <View style={styles.iconContainer}>
+                <Image source={edit} style={styles.buttonImage} />
+              </View>
+              <Text style={styles.buttonText}>Manage Complaints</Text>
+              <Text style={styles.subText}>Edit or remove entries</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.gridItem} 
+              onPress={() => navigation.navigate('UserGarbage')}
+              activeOpacity={0.9}
+            >
+              <View style={styles.iconContainer}>
+                <Image source={bin} style={styles.buttonImage} />
+              </View>
+              <Text style={styles.buttonText}>Waste Locations</Text>
+              <Text style={styles.subText}>Find disposal sites</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        </ScrollView>
-      </View>
+      </ScrollView>
       <CustomerNav />
     </SafeAreaView>
   );
@@ -51,48 +79,63 @@ const CustomerHome: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor:'#E8F5E9',
+    backgroundColor: '#F8FCF9',
+  },
+  scrollContainer: {
+    flexGrow: 1,
   },
   innerContainer: {
     flex: 1,
-    margin: 20,
-    paddingBottom: 20, // Add padding to the bottom to ensure even spacing
+    marginHorizontal: 16,
+    marginBottom: 20,
   },
   topImage: {
     width: '100%',
-    height: 300,
-    borderRadius: 15,
-    marginBottom: 10,
+    height: 200,
+    borderRadius: 12,
+    marginVertical: 16,
   },
   gridContainer: {
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   gridItem: {
-    width: '100%',
-    aspectRatio: 3,
-    marginBottom: 20, // Ensure even spacing between items
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 15,
-    padding: 15,
-    shadowColor: '#000',
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  iconContainer: {
+    backgroundColor: '#E8F5E9',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
   },
   buttonImage: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
+    width: 48,
+    height: 48,
+    tintColor: '#2E7D32',
   },
   buttonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F96D2B',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1B5E20',
     textAlign: 'center',
+    marginVertical: 4,
+  },
+  subText: {
+    fontSize: 12,
+    color: '#81C784',
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
 
