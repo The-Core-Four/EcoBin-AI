@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import CustomerNav from '../../Components/CustomerNav';
 import Header from '../../Components/HeaderCustomer';
+import userStore from '../../Store/userStore';
 
 const hero = require('../../../assets/homeHero.jpg');
 const add = require('../../../assets/add.png');
@@ -12,62 +13,95 @@ const bin = require('../../../assets/nav (2).png');
 
 const CustomerHome: React.FC = () => {
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
+  const { user } = userStore();
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+
+  // Simulated data loading
+  useEffect(() => {
+    if (isFocused) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        setLastUpdated(new Date().toLocaleTimeString());
+      }, 1500);
+    }
+  }, [isFocused]);
+
+  const handleNavigation = (screen: string) => {
+    if (!user) {
+      Alert.alert('Session Expired', 'Please login again');
+      navigation.navigate('Signinscreen');
+      return;
+    }
+    
+    setLoading(true);
+    navigation.navigate(screen);
+  };
+
+  const RefreshIndicator = () => (
+    <View style={styles.refreshContainer}>
+      <Text style={styles.refreshText}>Last updated: {lastUpdated}</Text>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2E7D32" />
+          <Text style={styles.loadingText}>Loading Dashboard...</Text>
+        </View>
+        <CustomerNav />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshIndicator />
+        }
+      >
         <View style={styles.innerContainer}>
-          <Image source={hero} style={styles.topImage} />
-          
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeText}>Welcome back, {user?.name || 'Guest'}!</Text>
+            <Text style={styles.statusText}>All systems operational</Text>
+          </View>
+
+          <Image 
+            source={hero} 
+            style={styles.topImage} 
+            resizeMode="cover"
+          />
+
           <View style={styles.gridContainer}>
-            <TouchableOpacity 
-              style={styles.gridItem} 
-              onPress={() => navigation.navigate('AddComplaint')}
-              activeOpacity={0.9}
-            >
-              <View style={styles.iconContainer}>
-                <Image source={add} style={styles.buttonImage} />
-              </View>
-              <Text style={styles.buttonText}>New Complaint</Text>
-              <Text style={styles.subText}>Report a new issue</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.gridItem} 
-              onPress={() => navigation.navigate('ComplaintList')}
-              activeOpacity={0.9}
-            >
-              <View style={styles.iconContainer}>
-                <Image source={list} style={styles.buttonImage} />
-              </View>
-              <Text style={styles.buttonText}>My Complaints</Text>
-              <Text style={styles.subText}>View your submissions</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.gridItem} 
-              onPress={() => navigation.navigate('UpdateDeleteComplaint')}
-              activeOpacity={0.9}
-            >
-              <View style={styles.iconContainer}>
-                <Image source={edit} style={styles.buttonImage} />
-              </View>
-              <Text style={styles.buttonText}>Manage Complaints</Text>
-              <Text style={styles.subText}>Edit or remove entries</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.gridItem} 
-              onPress={() => navigation.navigate('UserGarbage')}
-              activeOpacity={0.9}
-            >
-              <View style={styles.iconContainer}>
-                <Image source={bin} style={styles.buttonImage} />
-              </View>
-              <Text style={styles.buttonText}>Waste Locations</Text>
-              <Text style={styles.subText}>Find disposal sites</Text>
-            </TouchableOpacity>
+            {[
+              { screen: 'AddComplaint', icon: add, title: 'New Complaint', subtitle: 'Report a new issue' },
+              { screen: 'ComplaintList', icon: list, title: 'My Complaints', subtitle: 'View your submissions' },
+              { screen: 'UpdateDeleteComplaint', icon: edit, title: 'Manage Complaints', subtitle: 'Edit or remove entries' },
+              { screen: 'UserGarbage', icon: bin, title: 'Waste Locations', subtitle: 'Find disposal sites' },
+            ].map((item, index) => (
+              <TouchableOpacity 
+                key={index}
+                style={styles.gridItem} 
+                onPress={() => handleNavigation(item.screen)}
+                activeOpacity={0.9}
+                disabled={loading}
+              >
+                <View style={styles.iconContainer}>
+                  <Image source={item.icon} style={styles.buttonImage} />
+                </View>
+                <Text style={styles.buttonText}>{item.title}</Text>
+                <Text style={styles.subText}>{item.subtitle}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       </ScrollView>
@@ -88,6 +122,31 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 16,
     marginBottom: 20,
+  },
+  welcomeContainer: {
+    marginVertical: 16,
+    paddingHorizontal: 8,
+  },
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#1B5E20',
+    marginBottom: 4,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#81C784',
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    color: '#2E7D32',
+    fontSize: 16,
   },
   topImage: {
     width: '100%',
@@ -136,6 +195,14 @@ const styles = StyleSheet.create({
     color: '#81C784',
     textAlign: 'center',
     fontWeight: '500',
+  },
+  refreshContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  refreshText: {
+    fontSize: 12,
+    color: '#81C784',
   },
 });
 
