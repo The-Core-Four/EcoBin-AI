@@ -212,7 +212,6 @@ const AddDriverDetails = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 16,
     padding: 20,
     backgroundColor: "#f8f9fa",
   },
