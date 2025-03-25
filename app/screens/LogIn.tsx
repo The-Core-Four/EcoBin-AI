@@ -75,7 +75,7 @@ const LoginScreen: React.FC = () => {
     >
       <View style={styles.content}>
         <Image 
-          source={require('../../assets/homeHero.jpg')}
+          source={require('../../assets/icon.png')}
           style={styles.logo} 
           resizeMode="contain"
         />
@@ -137,6 +137,10 @@ const LoginScreen: React.FC = () => {
           )}
         </TouchableOpacity>
       </View>
+        {/* Copyright Text */}
+    <View style={styles.footer}>
+      <Text style={styles.footerText}>©2025, The Core Four. All Rights Reserved.</Text>
+    </View>
     </KeyboardAvoidingView>
   );
 };
@@ -153,10 +157,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 250,
+    height: 250,
     alignSelf: 'center',
-    marginBottom: 24,
+    marginBottom: 0,
   },
   title: {
     fontSize: 24,
@@ -221,6 +225,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginLeft: 8,
   },
+  footer: {
+  alignItems: 'center',
+  paddingBottom: 16,
+},
+footerText: {
+  fontSize: 12,
+  color: '#94A3B8',
+  textAlign: 'center',
+},
+
 });
 
 export default LoginScreen;
