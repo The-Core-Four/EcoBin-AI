@@ -1,26 +1,46 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Brand Colors (New addition)
  */
+const BRAND_COLORS = {
+  WHITE: '#ffffff',
+  NEAR_WHITE: '#feffff',
+  DARK_GREEN: '#124438',
+  DEEP_GREEN: '#104236',
+  FOREST_GREEN: '#134539',
+  LIGHT_ACCENT: '#e8f5e9', // Added complementary light accent
+  DARK_ACCENT: '#0a2e22'  // Added complementary dark accent
+};
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
+/**
+ * Existing color system with brand integration
+ */
 export const Colors = {
   light: {
+    ...BRAND_COLORS,
     text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
+    background: BRAND_COLORS.NEAR_WHITE,
+    tint: BRAND_COLORS.DEEP_GREEN,
     icon: '#687076',
     tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    tabIconSelected: BRAND_COLORS.DEEP_GREEN,
+    surface: BRAND_COLORS.WHITE,
+    primary: BRAND_COLORS.FOREST_GREEN,
+    secondary: BRAND_COLORS.LIGHT_ACCENT
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    ...BRAND_COLORS,
+    text: BRAND_COLORS.NEAR_WHITE,
+    background: BRAND_COLORS.DARK_GREEN,
+    tint: BRAND_COLORS.FOREST_GREEN,
+    icon: BRAND_COLORS.NEAR_WHITE,
+    tabIconDefault: BRAND_COLORS.NEAR_WHITE,
+    tabIconSelected: BRAND_COLORS.WHITE,
+    surface: BRAND_COLORS.DEEP_GREEN,
+    primary: BRAND_COLORS.FOREST_GREEN,
+    secondary: BRAND_COLORS.DARK_ACCENT
   },
 };
+
+// Maintain backward compatibility
+export const tintColorLight = Colors.light.tint;
+export const tintColorDark = Colors.dark.tint;
