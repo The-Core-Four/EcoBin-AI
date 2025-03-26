@@ -161,38 +161,47 @@ export default HomeDD;
 
 const styles = StyleSheet.create({
   topImage: {
-    width: '100%',
+    width: "100%",
     height: 250,
     marginBottom: 30,
+    borderRadius: 15, // Slightly rounded edges for a softer look
   },
   gridContainer: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+    flexDirection: "column",
+    justifyContent: "space-between",
+    paddingHorizontal: 20, // Added padding for better spacing
   },
   gridItem: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 3,
     marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3, // Gives a modern card effect
+    padding: 15,
   },
   buttonImage: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
+    width: 70, // Slightly increased for a better touch target
+    height: 70,
+    marginBottom: 12,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#38e079',
-    textAlign: 'center',
+    fontSize: 18, // Slightly larger for better readability
+    fontWeight: "600",
+    color: "#28a745", // More natural green
+    textAlign: "center",
   },
   title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#181818',
-    textAlign: 'center',
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#212529",
+    textAlign: "center",
+    marginBottom: 20,
   },
 });
