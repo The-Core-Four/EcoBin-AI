@@ -144,8 +144,8 @@ export default function CameraScreen() {
             step={0.1}
             value={zoom}
             onValueChange={setZoom}
-            thumbTintColor="#FF4081"
-            minimumTrackTintColor="#FF4081"
+            thumbTintColor="#38E079"
+            minimumTrackTintColor="#38E079"
             maximumTrackTintColor="#ffffff"
           />
         </View>
@@ -167,32 +167,33 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   capturedImage: {
-    height: '75%', // Display the captured image at 75% height
+    height: '80%', 
     width: '100%',
     position: 'absolute',
-    top: '12.5%', // Center the image vertically
+    top: '10%',
+    borderRadius: 10, 
   },
   overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   buttonContainer: {
     width: '100%',
     position: 'absolute',
-    bottom: 30,
+    bottom: 40, 
     paddingHorizontal: 25,
     alignItems: 'center',
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     width: '100%',
   },
   topButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 30,
+    padding: 20, 
     position: 'absolute',
-    top: 0,
+    top: 10, 
     width: '100%',
   },
   captureContainer: {
@@ -202,31 +203,31 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   captureButton: {
-    backgroundColor: '#FF4081',
+    backgroundColor: '#1B5E20',
     borderRadius: 50,
-    height: 70,
-    width: 70,
+    height: 75,
+    width: 75,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
   },
   libraryButton: {
-    marginRight: 20,
+    marginRight: 25,
   },
   zoomButton: {
-    marginLeft: 20,
+    marginLeft: 25,
   },
   zoomContainer: {
     alignItems: 'center',
     position: 'absolute',
-    bottom: 100,
+    bottom: 120, 
   },
   zoomSlider: {
-    width: 200,
-    marginBottom:30
+    width: 220, 
+    marginBottom: 25,
   },
 });

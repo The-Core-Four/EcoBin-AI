@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { 
+  View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, 
+  ScrollView, ActivityIndicator, Alert, RefreshControl, ImageBackground
+} from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import CustomerNav from '../../Components/CustomerNav';
 import Header from '../../Components/HeaderCustomer';
 import userStore from '../../Store/userStore';
 
+// Import images correctly
 const hero = require('../../../assets/homeHero.jpg');
 const add = require('../../../assets/add.png');
 const edit = require('../../../assets/edit.png');
@@ -15,10 +19,12 @@ const CustomerHome: React.FC = () => {
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
   const { user } = userStore();
+  
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
-  // Simulated data loading
+  // Simulated data loading effect
   useEffect(() => {
     if (isFocused) {
       setLoading(true);
@@ -28,6 +34,15 @@ const CustomerHome: React.FC = () => {
       }, 1500);
     }
   }, [isFocused]);
+
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+      setLastUpdated(new Date().toLocaleTimeString());
+    }, 1200);
+  }, []);
 
   const handleNavigation = (screen: string) => {
     if (!user) {
@@ -39,12 +54,6 @@ const CustomerHome: React.FC = () => {
     setLoading(true);
     navigation.navigate(screen);
   };
-
-  const RefreshIndicator = () => (
-    <View style={styles.refreshContainer}>
-      <Text style={styles.refreshText}>Last updated: {lastUpdated}</Text>
-    </View>
-  );
 
   if (loading) {
     return (
@@ -62,11 +71,11 @@ const CustomerHome: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshIndicator />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         <View style={styles.innerContainer}>
@@ -75,11 +84,10 @@ const CustomerHome: React.FC = () => {
             <Text style={styles.statusText}>All systems operational</Text>
           </View>
 
-          <Image 
-            source={hero} 
-            style={styles.topImage} 
-            resizeMode="cover"
-          />
+          {/* Hero Image */}
+          <ImageBackground source={hero} style={styles.topImage} resizeMode="cover">
+           
+          </ImageBackground>
 
           <View style={styles.gridContainer}>
             {[
@@ -93,7 +101,6 @@ const CustomerHome: React.FC = () => {
                 style={styles.gridItem} 
                 onPress={() => handleNavigation(item.screen)}
                 activeOpacity={0.9}
-                disabled={loading}
               >
                 <View style={styles.iconContainer}>
                   <Image source={item.icon} style={styles.buttonImage} />
@@ -152,7 +159,22 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: 12,
+    overflow: 'hidden',
     marginVertical: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlay: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   gridContainer: {
     flexDirection: 'row',
@@ -195,14 +217,6 @@ const styles = StyleSheet.create({
     color: '#81C784',
     textAlign: 'center',
     fontWeight: '500',
-  },
-  refreshContainer: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  refreshText: {
-    fontSize: 12,
-    color: '#81C784',
   },
 });
 

@@ -45,7 +45,7 @@ const LoginScreen: React.FC = () => {
 
   const handleLogin = async () => {
     if (emailError || passwordError || !email || !password) {
-      Alert.alert('Validation Error', 'Please fix input errors');
+      Alert.alert('Error Login', 'Please fill all fields');
       return;
     }
     
@@ -75,7 +75,7 @@ const LoginScreen: React.FC = () => {
     >
       <View style={styles.content}>
         <Image 
-          source={require('../../assets/homeHero.jpg')}
+          source={require('../../assets/icon.png')}
           style={styles.logo} 
           resizeMode="contain"
         />
@@ -153,10 +153,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 250,
+    height: 250,
     alignSelf: 'center',
-    marginBottom: 24,
   },
   title: {
     fontSize: 24,
