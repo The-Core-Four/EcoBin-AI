@@ -61,7 +61,14 @@ const LoginScreen: React.FC = () => {
         Alert.alert('Error', 'User profile not found');
       }
     } catch (error: any) {
-      Alert.alert('Authentication Failed', 'Invalid email or password');
+      console.error('Login Error:', error);
+      let errorMessage = 'Invalid email or password';
+      if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      Alert.alert('Authentication Failed', errorMessage);
     } finally {
       setLoading(false);
     }
