@@ -1,33 +1,86 @@
-import React from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { Image, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Colors } from '../constants/Colors';
 
-// Import your icons
-const homeicon = require('../../assets/CusHome.png');
-const guideicon = require('../../assets/ChatbotIcon.png');
-const cameraicon = require('../../assets/CameraIcon.png');
+const CustomerNav: React.FC = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const [activeTab, setActiveTab] = useState(route.name);
 
-const AdminNav: React.FC = () => {
-  const navigation: any = useNavigation();
+  useEffect(() => {
+    const state = navigation.getState();
+    if (state) {
+      const currentRoute = state.routes[state.index].name;
+      setActiveTab(currentRoute);
+    }
+  }, [navigation, route]);
+
+  const handleNavigation = (routeName: string) => {
+    navigation.navigate(routeName);
+  };
 
   return (
     <View style={styles.container}>
-      {/* Home Icon */}
-      <TouchableOpacity onPress={() => navigation.navigate('CustomerHome')} style={styles.iconContainer}>
-        <Image source={homeicon} style={styles.icon} />
-        <Text style={styles.iconLabel}>Home</Text>
+      <TouchableOpacity 
+        onPress={() => handleNavigation('CustomerHome')} 
+        style={[
+          styles.tabContainer,
+          activeTab === 'CustomerHome' && styles.activeTabContainer
+        ]}
+      >
+        <Icon 
+          name="home" 
+          size={24} 
+          color={activeTab === 'CustomerHome' ? Colors.light.DARK_GREEN : Colors.light.NEAR_WHITE} 
+        />
+        <Text style={[
+          styles.label,
+          activeTab === 'CustomerHome' ? styles.activeLabel : styles.inactiveLabel
+        ]}>
+          Home
+        </Text>
       </TouchableOpacity>
 
-      {/* Guide Icon */}
-      <TouchableOpacity onPress={() => navigation.navigate('Chatbot')} style={styles.iconContainer}>
-        <Image source={guideicon} style={styles.icon} />
-        <Text style={styles.iconLabel}>Chatbot</Text>
+      <TouchableOpacity 
+        onPress={() => handleNavigation('Chatbot')} 
+        style={[
+          styles.tabContainer,
+          activeTab === 'Chatbot' && styles.activeTabContainer
+        ]}
+      >
+        <Icon 
+          name="chat" 
+          size={24} 
+          color={activeTab === 'Chatbot' ? Colors.light.DARK_GREEN : Colors.light.NEAR_WHITE} 
+        />
+        <Text style={[
+          styles.label,
+          activeTab === 'Chatbot' ? styles.activeLabel : styles.inactiveLabel
+        ]}>
+          Chatbot
+        </Text>
       </TouchableOpacity>
 
-      {/* Camera Icon */}
-      <TouchableOpacity onPress={() => navigation.navigate('CameradScreen')} style={styles.iconContainer}>
-        <Image source={cameraicon} style={styles.icon} />
-        <Text style={styles.iconLabel}>Camera</Text>
+      <TouchableOpacity 
+        onPress={() => handleNavigation('CameradScreen')} 
+        style={[
+          styles.tabContainer,
+          activeTab === 'CameradScreen' && styles.activeTabContainer
+        ]}
+      >
+        <Icon 
+          name="camera-alt" 
+          size={24} 
+          color={activeTab === 'CameradScreen' ? Colors.light.DARK_GREEN : Colors.light.NEAR_WHITE} 
+        />
+        <Text style={[
+          styles.label,
+          activeTab === 'CameradScreen' ? styles.activeLabel : styles.inactiveLabel
+        ]}>
+          Camera
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -36,34 +89,46 @@ const AdminNav: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: 60, // Slightly increased height for better touch area
-    backgroundColor: '#ffffff', // Light background for a clean look
+    height: 65,
+    backgroundColor: Colors.light.DARK_GREEN,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    borderTopWidth: 1, // Add a subtle border on top
-    borderTopColor: '#e0e0e0', // Light grey color for the border
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    paddingHorizontal: 10,
+    borderTopWidth: 2,
+    borderTopColor: Colors.light.FOREST_GREEN,
+    elevation: 8,
+    shadowColor: Colors.light.DARK_ACCENT,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
-  iconContainer: {
-    flex: 1,
+  tabContainer: {
     alignItems: 'center',
-    justifyContent: 'center', // Center icon and text vertically
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginHorizontal: 3,
   },
-  icon: {
-    width: 28, // Slightly larger icons for better visibility
-    height: 28,
-    marginBottom: 5, // Space between the icon and the label
+  activeTabContainer: {
+    backgroundColor: Colors.light.LIGHT_ACCENT,
+    elevation: 4,
+    shadowColor: Colors.light.DARK_ACCENT,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
-  iconLabel: {
-    fontSize: 12, // Small label text size
-    color: '#333', // Darker color for contrast
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  activeLabel: {
+    color: Colors.light.DARK_GREEN,
+  },
+  inactiveLabel: {
+    color: Colors.light.NEAR_WHITE,
   },
 });
 
-export default AdminNav;
+export default CustomerNav;

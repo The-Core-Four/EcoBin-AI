@@ -1,34 +1,86 @@
-import React from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { Image, StyleSheet, View, TouchableOpacity } from 'react-native';
-
-
-// Import your icons
-const homeicon = require('../../assets/nav (1).png');
-const guideicon = require('../../assets/nav (2).png');
-const profileicon = require('../../assets/nav (3).png');
+import React, { useState, useEffect } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Colors } from '../constants/Colors';
 
 const AdminNav: React.FC = () => {
-  const navigation: any = useNavigation();
+  const navigation = useNavigation();
+  const route = useRoute();
+  const [activeTab, setActiveTab] = useState(route.name);
+
+  useEffect(() => {
+    const state = navigation.getState();
+    if (state) {
+      const currentRoute = state.routes[state.index].name;
+      setActiveTab(currentRoute);
+    }
+  }, [navigation, route]);
+
+  const handleNavigation = (routeName: string) => {
+    navigation.navigate(routeName);
+  };
 
   return (
     <View style={styles.container}>
-      
-      <TouchableOpacity onPress={() => navigation.navigate('HomeDD')} style={styles.iconContainer}>
-        <Image source={homeicon} style={styles.icon} />
+      <TouchableOpacity 
+        onPress={() => handleNavigation('HomeDD')} 
+        style={[
+          styles.tabContainer,
+          activeTab === 'HomeDD' && styles.activeTabContainer
+        ]}
+      >
+        <Icon 
+          name="home" 
+          size={28} 
+          color={activeTab === 'HomeDD' ? Colors.light.DARK_GREEN : Colors.light.NEAR_WHITE} 
+        />
+        <Text style={[
+          styles.label,
+          activeTab === 'HomeDD' ? styles.activeLabel : styles.inactiveLabel
+        ]}>
+          Home
+        </Text>
       </TouchableOpacity>
 
-
-      <TouchableOpacity onPress={() => navigation.navigate('MainGarbage')} style={styles.iconContainer}>
-
-
-        <Image source={guideicon} style={styles.icon} />
+      <TouchableOpacity 
+        onPress={() => handleNavigation('MainGarbage')} 
+        style={[
+          styles.tabContainer,
+          activeTab === 'MainGarbage' && styles.activeTabContainer
+        ]}
+      >
+        <Icon 
+          name="delete" 
+          size={28} 
+          color={activeTab === 'MainGarbage' ? Colors.light.DARK_GREEN : Colors.light.NEAR_WHITE} 
+        />
+        <Text style={[
+          styles.label,
+          activeTab === 'MainGarbage' ? styles.activeLabel : styles.inactiveLabel
+        ]}>
+          Garbage
+        </Text>
       </TouchableOpacity>
 
-
-      <TouchableOpacity onPress={() => navigation.navigate('AdminSideComplaint')} style={styles.iconContainer}>
-
-        <Image source={profileicon} style={styles.icon} />
+      <TouchableOpacity 
+        onPress={() => handleNavigation('AdminSideComplaint')} 
+        style={[
+          styles.tabContainer,
+          activeTab === 'AdminSideComplaint' && styles.activeTabContainer
+        ]}
+      >
+        <Icon 
+          name="list-alt" 
+          size={28} 
+          color={activeTab === 'AdminSideComplaint' ? Colors.light.DARK_GREEN : Colors.light.NEAR_WHITE} 
+        />
+        <Text style={[
+          styles.label,
+          activeTab === 'AdminSideComplaint' ? styles.activeLabel : styles.inactiveLabel
+        ]}>
+          Complaints
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -36,21 +88,46 @@ const AdminNav: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%', // Take up the full width of the screen
-    height: 60, // Set the height of the navbar
-    backgroundColor: '#f8f8f8', // Optional background color
-    flexDirection: 'row', // Arrange icons horizontally
-    justifyContent: 'space-around', // Space icons evenly across the navbar
-    alignItems: 'center', // Center icons vertically
-    paddingHorizontal: 20, // Add padding on the sides
+    width: '100%',
+    height: 65, // Reduced from 85
+    backgroundColor: Colors.light.DARK_GREEN,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 10, // Reduced from 15
+    borderTopWidth: 2, // Reduced from 3
+    borderTopColor: Colors.light.FOREST_GREEN,
+    elevation: 8, // Reduced from 12
+    shadowColor: Colors.light.DARK_ACCENT,
+    shadowOffset: { width: 0, height: -3 }, // Reduced from -6
+    shadowOpacity: 0.15, // Reduced from 0.2
+    shadowRadius: 6, // Reduced from 8
   },
-  iconContainer: {
-    flex: 1, // Allow each icon to take equal space
-    alignItems: 'center', // Center icons horizontally within their container
+  tabContainer: {
+    alignItems: 'center',
+    paddingVertical: 8, // Reduced from 12
+    paddingHorizontal: 12, // Reduced from 18
+    borderRadius: 10, // Slightly smaller
+    marginHorizontal: 3, // Reduced from 5
   },
-  icon: {
-    width: 24, // Icon width
-    height: 24, // Icon height
+  activeTabContainer: {
+    backgroundColor: Colors.light.LIGHT_ACCENT,
+    elevation: 4, // Reduced from 6
+    shadowColor: Colors.light.DARK_ACCENT,
+    shadowOffset: { width: 0, height: 2 }, // Reduced from 3
+    shadowOpacity: 0.15, // Reduced from 0.2
+    shadowRadius: 4, // Reduced from 6
+  },
+  label: {
+    fontSize: 12, // Reduced from 13
+    fontWeight: '600',
+    marginTop: 2, // Reduced from 4
+  },
+  activeLabel: {
+    color: Colors.light.DARK_GREEN,
+  },
+  inactiveLabel: {
+    color: Colors.light.NEAR_WHITE,
   },
 });
 
