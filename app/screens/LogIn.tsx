@@ -17,6 +17,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '../../Firebase_Config';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Colors } from '../constants/Colors';
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -27,7 +28,6 @@ const LoginScreen: React.FC = () => {
   const [passwordError, setPasswordError] = useState('');
   const navigation = useNavigation();
 
-  // Email validation must contain @gmail.com
   const validateEmail = (text: string) => {
     setEmail(text);
     if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(text)) {
@@ -37,7 +37,6 @@ const LoginScreen: React.FC = () => {
     }
   };
 
-  // Password cannot be empty validation
   const validatePassword = (text: string) => {
     setPassword(text);
     setPasswordError(text ? '' : 'Password required');
@@ -80,31 +79,38 @@ const LoginScreen: React.FC = () => {
           resizeMode="contain"
         />
         
-        {/* Maintained Welcome text */}
         <Text style={styles.title}>Welcome to EcoBin AI</Text>
 
-        {/* Email Input with Validation */}
         <View style={[styles.inputContainer, emailError && styles.inputError]}>
-          <Icon name="email" size={20} color="#666" style={styles.icon} />
+          <Icon 
+            name="email" 
+            size={20} 
+            color={Colors.light.DARK_GREEN} 
+            style={styles.icon} 
+          />
           <TextInput
             value={email}
             placeholder="Email address"
-            placeholderTextColor="#999"
+            placeholderTextColor={Colors.light.DARK_ACCENT}
             autoCapitalize="none"
             keyboardType="email-address"
             onChangeText={validateEmail}
             style={styles.input}
           />
         </View>
-        {emailError ? <Text style={styles.errorText}>⚠️ {emailError}</Text> : null}
+        {emailError && <Text style={styles.errorText}>⚠️ {emailError}</Text>}
 
-        {/* Password Input with Validation */}
         <View style={[styles.inputContainer, passwordError && styles.inputError]}>
-          <Icon name="lock" size={20} color="#666" style={styles.icon} />
+          <Icon 
+            name="lock" 
+            size={20} 
+            color={Colors.light.DARK_GREEN} 
+            style={styles.icon} 
+          />
           <TextInput
             value={password}
             placeholder="Password"
-            placeholderTextColor="#999"
+            placeholderTextColor={Colors.light.DARK_ACCENT}
             secureTextEntry={!showPassword}
             autoCapitalize="none"
             onChangeText={validatePassword}
@@ -117,13 +123,12 @@ const LoginScreen: React.FC = () => {
             <Icon
               name={showPassword ? 'visibility-off' : 'visibility'}
               size={20}
-              color="#666"
+              color={Colors.light.DARK_GREEN}
             />
           </TouchableOpacity>
         </View>
-        {passwordError ? <Text style={styles.errorText}>⚠️ {passwordError}</Text> : null}
+        {passwordError && <Text style={styles.errorText}>⚠️ {passwordError}</Text>}
 
-        {/* Login Button - Color unchanged */}
         <TouchableOpacity 
           style={[styles.button, (loading || emailError || passwordError) && styles.disabledButton]} 
           onPress={handleLogin}
@@ -131,7 +136,7 @@ const LoginScreen: React.FC = () => {
           activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#FFF" />
+            <ActivityIndicator size="small" color={Colors.light.WHITE} />
           ) : (
             <Text style={styles.buttonText}>Login</Text>
           )}
@@ -141,11 +146,10 @@ const LoginScreen: React.FC = () => {
   );
 };
 
-// Maintained original color scheme
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.light.NEAR_WHITE,
   },
   content: {
     flex: 1,
@@ -156,37 +160,38 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     alignSelf: 'center',
+    marginBottom: 24,
   },
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#0F172A',
+    color: Colors.light.DARK_GREEN,
     textAlign: 'center',
     marginBottom: 40,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: Colors.light.WHITE,
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.light.LIGHT_ACCENT,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: Colors.light.DARK_GREEN,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
   },
   inputError: {
-    borderColor: '#EF4444',
+    borderColor: Colors.light.DARK_ACCENT,
   },
   input: {
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.light.DARK_GREEN,
   },
   icon: {
     marginRight: 12,
@@ -195,27 +200,27 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   button: {
-    backgroundColor: '#38E079',
+    backgroundColor: Colors.light.FOREST_GREEN,
     borderRadius: 12,
     padding: 18,
     marginTop: 24,
     elevation: 4,
-    shadowColor: '#38E079',
+    shadowColor: Colors.light.FOREST_GREEN,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
   disabledButton: {
-    backgroundColor: '#A0AEC0',
+    backgroundColor: Colors.light.LIGHT_ACCENT,
   },
   buttonText: {
-    color: '#FFF',
+    color: Colors.light.WHITE,
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
   },
   errorText: {
-    color: '#EF4444',
+    color: Colors.light.DARK_ACCENT,
     fontSize: 14,
     marginBottom: 12,
     marginLeft: 8,
