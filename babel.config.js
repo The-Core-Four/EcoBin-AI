@@ -1,21 +1,24 @@
+// Babel configuration for Expo projects
 module.exports = function(api) {
-  api.cache(true); // Caches the configuration for improved performance
-  
+  // Cache configuration for performance
+  api.cache(true);
+
   return {
-    presets: [
-      'babel-preset-expo', // Preset for Expo projects
-    ],
+    // Base Expo presets
+    presets: ['babel-preset-expo'],
+    
+    // Plugin configuration
     plugins: [
+      // Environment variables loader
       [
-        'module:react-native-dotenv', // Plugin for importing environment variables
+        'module:react-native-dotenv',
         {
-          moduleName: '@env', // Name of the module to import env variables from
-          path: '.env', // Path to the .env file
-          safe: false, // Optional: If set to true, will check for the existence of variables
-          allowUndefined: true, // Optional: If set to true, allows undefined variables in your .env file
-        },
-      ],
-      // Add other Babel plugins here if needed
-    ],
+          moduleName: '@env',         // Import namespace
+          path: '.env',               // Environment file location
+          safe: false,                // Disable safe mode for flexibility
+          allowUndefined: true,      // Allow missing variables
+        }
+      ]
+    ]
   };
 };

@@ -1,8 +1,8 @@
-// Import the functions you need from the SDKs you need
+// Firebase Configuration Service
 import { initializeApp } from "firebase/app";
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   FIREBASE_API_KEY,
   FIREBASE_AUTH_DOMAIN,
@@ -12,7 +12,18 @@ import {
   FIREBASE_APP_ID
 } from '@env';
 
-// Your web app's Firebase configuration
+// Validate required Firebase configuration parameters
+const validateFirebaseConfig = (config: Record<string, string>) => {
+  const missingKeys = Object.entries(config)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingKeys.length) {
+    throw new Error(`Missing Firebase configuration values for: ${missingKeys.join(', ')}`);
+  }
+};
+
+// Firebase project configuration from environment variables
 const firebaseConfig = {
   apiKey: FIREBASE_API_KEY,
   authDomain: FIREBASE_AUTH_DOMAIN,
@@ -22,11 +33,25 @@ const firebaseConfig = {
   appId: FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-const FIREBASE_APP = initializeApp(firebaseConfig);
-const FIREBASE_AUTH = initializeAuth(FIREBASE_APP, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-});
-const FIREBASE_DB = getFirestore(FIREBASE_APP);
+// Validate configuration before initialization
+validateFirebaseConfig(firebaseConfig);
 
-export { FIREBASE_APP, FIREBASE_AUTH, FIREBASE_DB };
+// Initialize Firebase core service
+const firebaseApp = initializeApp(firebaseConfig);
+
+// Initialize Authentication service with persistent storage
+let firebaseAuth;
+try {
+  firebaseAuth = initializeAuth(firebaseApp, {
+    persistence: getReactNativePersistence(AsyncStorage)
+  });
+} catch (error) {
+  // Fallback to basic authentication if persistence fails
+  const { getAuth } = require('firebase/auth');
+  firebaseAuth = getAuth(firebaseApp);
+}
+
+// Initialize Cloud Firestore service
+const firestoreDb = getFirestore(firebaseApp);
+
+export { firebaseApp, firebaseAuth, firestoreDb };
