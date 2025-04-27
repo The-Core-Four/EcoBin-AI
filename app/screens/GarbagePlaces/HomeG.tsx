@@ -17,7 +17,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import AdminNav from '../../Components/AdminNav';
 import Header from '../../Components/HeaderAdmin';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 
 interface GarbagePlace {
   id: string;
