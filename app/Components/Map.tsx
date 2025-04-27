@@ -1,5 +1,6 @@
 import { Platform, StyleSheet } from 'react-native';
 import WebMap from './WebMap';
+import React from 'react';
 
 type MapProps = {
   initialRegion?: {

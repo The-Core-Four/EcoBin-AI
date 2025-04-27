@@ -1,3 +1,4 @@
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 const WebMap = ({ style }: { style?: object }) => {
