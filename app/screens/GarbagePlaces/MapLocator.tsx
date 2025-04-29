@@ -1,77 +1,105 @@
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Linking } from 'react-native';
-import React, { useRef, useState } from 'react';
-import { TextInput } from 'react-native-paper';
+import React, { useRef, useState, useEffect } from 'react';
 import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { TextInput, useTheme } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
+// Interface for Google Places result
+interface PlaceResult {
+  place_id: string;
+  name: string;
+  geometry: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+  formatted_address?: string;
+}
 
 const { width, height } = Dimensions.get("window");
-const LATITUDE_DELTA = 0.1;
-const LONGITUDE_DELTA = 0.1;
 const INITIAL_LAT = 7.8731;
 const INITIAL_LNG = 80.7718;
-const INITIAL_POSITION = {
+const INITIAL_REGION = {
   latitude: INITIAL_LAT,
   longitude: INITIAL_LNG,
-  latitudeDelta: LATITUDE_DELTA,
-  longitudeDelta: LONGITUDE_DELTA,
+  latitudeDelta: 0.1,
+  longitudeDelta: 0.1,
 };
 
 const MapLocator = ({ route }) => {
-  const { address } = route.params;  // Access address from route params
-  const [results, setResults] = useState<any[]>([]);
+  const { address } = route.params;
+  const [results, setResults] = useState<PlaceResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const map = useRef<MapView | null>(null);
+  const [error, setError] = useState('');
+  const map = useRef<MapView>(null);
+  const theme = useTheme();
 
-  
+  useEffect(() => {
+    if (address) {
+      searchPlaces();
+    }
+  }, [address]);
+
   const searchPlaces = async () => {
-    if (!address.trim().length) return;
+    if (!address?.trim()) {
+      setError('Please enter a valid address');
+      return;
+    }
 
-    setLoading(true);  // Start loading indicator
-
-    const googleApiUrl = "https://maps.googleapis.com/maps/api/place/textSearch/json";
-    const input = address.trim();
-    const location = `${INITIAL_LAT},${INITIAL_LNG}&radius=2000`;
-    const url = `${googleApiUrl}?query=${input}&location=${location}&key=AIzaSyADfLlJvc3q9pNkqlb9HbMAQWpW3d2kS90`;
+    setLoading(true);
+    setError('');
 
     try {
-      const resp = await fetch(url);
-      const json = await resp.json();
+      const apiUrl = "https://maps.googleapis.com/maps/api/place/textsearch/json";
+      const params = new URLSearchParams({
+        query: address,
+        location: `${INITIAL_LAT},${INITIAL_LNG}`,
+        radius: '2000',
+        key: process.env.GOOGLE_MAPS_API_KEY,
+      });
 
-      if (json && json.results) {
-        const coords: LatLng[] = [];
-        for (const item of json.results) {
-          coords.push({
-            latitude: item.geometry.location.lat,
-            longitude: item.geometry.location.lng,
-          });
-        }
-        setResults(json.results);
-        if (coords.length) {
-          map.current?.fitToCoordinates(coords, {
-            edgePadding: {
-              top: 50,
-              right: 50,
-              bottom: 50,
-              left: 50,
-            },
-            animated: true,
-          });
-        }
+      const response = await fetch(`${apiUrl}?${params}`);
+      const data = await response.json();
+
+      if (data.status === 'OK') {
+        setResults(data.results);
+        fitToMarkers(data.results);
+      } else {
+        setError('No locations found for this address');
       }
-    } catch (e) {
-      console.error(e);
-      alert("Failed to retrieve locations. Please try again.");
+    } catch (err) {
+      setError('Failed to fetch locations. Please check your connection.');
+      console.error('API Error:', err);
     } finally {
-      setLoading(false);  // Stop loading indicator
+      setLoading(false);
+    }
+  };
+
+  const fitToMarkers = (places: PlaceResult[]) => {
+    const coordinates = places.map(place => ({
+      latitude: place.geometry.location.lat,
+      longitude: place.geometry.location.lng,
+    }));
+
+    if (coordinates.length > 0) {
+      map.current?.fitToCoordinates(coordinates, {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: true,
+      });
     }
   };
 
   const openInGoogleMaps = () => {
-    if (address) {
-      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-      Linking.openURL(url).catch(err => console.error('Error opening Google Maps', err));
-    } else {
-      alert("No address provided to open in Google Maps.");
+    if (!address) {
+      setError('No address provided');
+      return;
     }
+
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    Linking.openURL(url).catch(() => {
+      setError('Failed to open Google Maps');
+    });
   };
 
   if (!address) {
@@ -88,95 +116,145 @@ const MapLocator = ({ route }) => {
         ref={map}
         style={styles.map}
         provider={PROVIDER_GOOGLE}
-        initialRegion={INITIAL_POSITION}
+        initialRegion={INITIAL_REGION}
+        accessibilityLabel="Map showing garbage locations"
       >
-        {results.length ? results.map((item, i) => {
-          const coord: LatLng = {
-            latitude: item.geometry.location.lat,
-            longitude: item.geometry.location.lng,
-          };
-          return (
-            <Marker
-              key={`search-item-${i}`}
-              coordinate={coord}
-              title={item.name}
-              description=''
-            />
-          );
-        }) : null}
+        {results.map((place, i) => (
+          <Marker
+            key={place.place_id}
+            coordinate={{
+              latitude: place.geometry.location.lat,
+              longitude: place.geometry.location.lng,
+            }}
+            title={place.name}
+            description={place.formatted_address}
+          >
+            <Icon name="delete" size={24} color={theme.colors.error} />
+          </Marker>
+        ))}
       </MapView>
-      <View style={styles.searchBox}>
+
+      <View style={[styles.controlsContainer, { backgroundColor: theme.colors.background }]}>
         <TextInput
-          style={styles.searchBoxField}
+          label="Search Address"
           value={address}
+          mode="outlined"
           editable={false}
+          right={<TextInput.Icon name="magnify" />}
+          style={styles.searchInput}
         />
-        <TouchableOpacity style={styles.buttonContainer} onPress={searchPlaces}>
-          <Text style={styles.buttonLabel}>View</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.buttonContainer} onPress={openInGoogleMaps}>
-          <Text style={styles.buttonLabel}>Open in Google Maps</Text>
-        </TouchableOpacity>
+
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity 
+            style={[styles.button, { backgroundColor: theme.colors.primary }]}
+            onPress={searchPlaces}
+            disabled={loading}
+          >
+            <Icon name="map-marker" size={20} color="white" />
+            <Text style={styles.buttonText}>Show Locations</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: theme.colors.accent }]}
+            onPress={openInGoogleMaps}
+          >
+            <Icon name="google-maps" size={20} color="white" />
+            <Text style={styles.buttonText}>Open in Maps</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
       {loading && (
         <View style={styles.loadingOverlay}>
-          {/* <ActivityIndicator size="large" color="#0000ff" /> */}
-          <ActivityIndicator size={50} color="#0000ff" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Searching locations...</Text>
+        </View>
+      )}
+
+      {error && (
+        <View style={styles.errorBanner}>
+          <Icon name="error-outline" size={20} color="white" />
+          <Text style={styles.errorMessage}>{error}</Text>
         </View>
       )}
     </View>
   );
 };
 
-export default MapLocator;
-
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  controlsContainer: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  searchInput: {
+    backgroundColor: 'white',
+    marginBottom: 12,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  button: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#666',
+  },
+  errorBanner: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ff4444',
+    padding: 16,
+    borderRadius: 8,
+    gap: 12,
+  },
+  errorMessage: {
+    color: 'white',
     flex: 1,
   },
   errorText: {
     fontSize: 18,
     color: '#d9534f',
-  },
-  map: {
-    width: '100%',
-    height: '100%',
-  },
-  searchBox: {
-    position: 'absolute',
-    width: '90%',
-    borderRadius: 8,
-    borderColor: '#aaa',
-    backgroundColor: 'white',
-    padding: 8,
-    alignSelf: 'center',
-    marginTop: 60,
-  },
-  searchBoxField: {
-    borderColor: '#777',
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  buttonContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-    backgroundColor: '#26f',
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  buttonLabel: {
-    fontSize: 18,
-    color: 'white',
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
+
+export default MapLocator;
