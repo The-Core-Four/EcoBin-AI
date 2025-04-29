@@ -1,81 +1,73 @@
 # ♻️ EcoBin-AI
-_Revolutionizing Waste Management with a Mobile-Based Garbage Collection System_
+### Mobile-Based Smart Garbage Collection System
 
-**EcoBin-AI** is a mobile-based solution that leverages modern technology to streamline and improve garbage collection processes through real-time monitoring, AI-powered sorting, and smart routing.
-
----
-
-## 🚀 Project Overview
-
-Waste management is a growing global concern. This system addresses key challenges such as:
-- **Unregulated waste levels**
-- **Inefficient collection processes**
-- **Lack of real-time communication**
-
-**EcoBin-AI** offers a **smart, scalable system** to optimize waste management workflows through automation, mobile integration, and AI.
+> **EcoBin-AI** is an intelligent mobile application that modernizes waste management using real-time monitoring, dynamic routing, and AI-powered garbage classification — all through a seamless mobile experience.
 
 ---
 
-## 🧠 Key Features
+## 🌍 Why EcoBin-AI?
 
-### ✅ Real-time Monitoring
-Monitor garbage levels at collection points using sensors for timely pickups.
+Modern cities face increasing challenges in waste management:
+- Overflowing garbage points
+- Inefficient manual collection
+- Lack of real-time visibility
 
-### 🧭 Dynamic Routing
-Optimized route generation for garbage trucks based on live data to reduce fuel use and time.
-
-### 📲 Mobile Application (React Native)
-Dedicated mobile app for drivers and admins to manage routes, collection points, and complaints.
-
-### 🤖 AI-Based Garbage Sorting
-Utilizes AI image recognition to classify and sort waste into relevant categories before processing.
+**EcoBin-AI** addresses these with a smart, scalable, and automated solution that connects field drivers, admins, and data through a single mobile app.
 
 ---
 
-## 🔧 System Modules
+## 🔑 Key Features
 
-1. **Manage Driver Details**  
-   Add, update, and remove driver data.
+- ✅ **Real-Time Monitoring**  
+  Keep track of garbage levels and collection points to ensure timely pickups.
 
-2. **Manage Waste Points**  
-   Track and update garbage bin locations and statuses.
+- 🧭 **Dynamic Routing**  
+  Auto-generates optimized routes for garbage trucks based on location and load status.
 
-3. **Manage Complaints & Issues**  
-   Allow users to report problems and track resolutions.
+- 📲 **Mobile Application (React Native)**  
+  Driver and admin portals for managing pickups, complaints, and waste points efficiently.
 
-4. **AI-Powered Sorting**  
-   Automated waste recognition and sorting using AI.
-
----
-
-## 🛠️ Technologies Used
-
-- **React Native** – Mobile app development  
-- **AI/Machine Learning** – For waste type classification  
-- **Firebase / Cloud Backend** – For data management  
-- **Figma** – UI/UX Design  
+- 🤖 **AI-Based Garbage Sorting**  
+  Uses AI to classify and sort garbage types before disposal for better recycling and processing.
 
 ---
 
-## 👨‍💻 Project Members
+## 🧩 Core Modules
 
-- Harshamal Masinghe (IT22577306)  
-- Yalindra Sadish (IT22360946)  
-- Kavindu Ranathunga (IT22236128)  
-- Rashmika Herath (IT22909664)  
-
----
-
-## 💡 Future Improvements
-
-- Citizen reporting via the app  
-- Predictive waste generation analytics  
-- Integration with municipal systems  
-- Offline support for remote areas  
+| Module                    | Description                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| 👷 Manage Drivers          | Add, update, and assign drivers to routes and collection zones.             |
+| 🗑️ Manage Waste Points     | Track bin status and location to monitor collection needs.                  |
+| 📢 Complaints Management   | Allow users or admins to raise and resolve issues quickly.                  |
+| 🧠 AI Sorting System       | Analyze waste images and auto-sort garbage into recyclable categories.      |
 
 ---
 
-## 🙏 Thank You
-We hope **EcoBin-AI** contributes to building cleaner and smarter cities.
+## 🛠️ Tech Stack
 
-> _For feedback or contributions, feel free to fork or contact us!_
+- **React Native** – Cross-platform mobile development  
+- **Firebase** – Backend services and real-time database  
+- **Machine Learning (AI)** – Garbage type recognition model  
+- **Figma** – UI/UX design & prototyping  
+
+---
+
+## 👨‍💻 Project Team
+
+| Name                        | Index No       |
+|-----------------------------|----------------|
+| Yasodara S. A. D. S         | IT22360946     |
+| Kavindi R. A                | IT22236128     |
+| Masinghe H. I. H. P         | IT22577306     |
+| Rajapaksha H. B             | IT22909664     |
+
+---
+
+## 🙌 Acknowledgment
+
+We aim to build a cleaner, smarter, and more sustainable environment through digital innovation.  
+Thank you for exploring **EcoBin-AI** — your interest supports our mission toward smarter waste solutions.
+
+> _Have suggestions or ideas to contribute? Feel free to fork this project or open an issue!_
+
+---
