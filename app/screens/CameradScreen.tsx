@@ -119,7 +119,7 @@ export default function CameraScreen() {
         {image ? (
           <View style={styles.actionButtons}>
             <Button title={"Re-Take"} icon="retweet" onPress={() => setImage(null)} color={'#f1c40f'} />
-            <Button title={"Save"} icon="check" onPress={saveImage} color={'#2ecc71'} />
+            <Button title={"Save"} icon="check" onPress={saveImage} color={'#166534'} />
           </View>
         ) : (
           <View style={styles.captureContainer}>
@@ -144,8 +144,8 @@ export default function CameraScreen() {
             step={0.1}
             value={zoom}
             onValueChange={setZoom}
-            thumbTintColor="#38E079"
-            minimumTrackTintColor="#38E079"
+            thumbTintColor="#166534"
+            minimumTrackTintColor="#166534"
             maximumTrackTintColor="#ffffff"
           />
         </View>
