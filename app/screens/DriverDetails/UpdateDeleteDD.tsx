@@ -1,10 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, Button, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  SafeAreaView,
+  ToastAndroid,
+  Alert,
+  Platform,
+} from 'react-native';
 import { FIREBASE_DB } from '../../../Firebase_Config';
-import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+} from 'firebase/firestore';
 import AdminNav from '../../Components/AdminNav';
 import Header from '../../Components/HeaderAdmin';
-
+ 
 interface DriverDetail {
   id: string;
   driverName: string;
@@ -17,13 +35,12 @@ interface DriverDetail {
   leavingTime: string;
   cdate: string;
 }
-
+ 
 const UpdateDeleteDD: React.FC = () => {
   const [driverDetails, setDriverDetails] = useState<DriverDetail[]>([]);
-  const [selectedDetail, setSelectedDetail] = useState<DriverDetail | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [updatedDetail, setUpdatedDetail] = useState<DriverDetail | null>(null);
-
+ 
   useEffect(() => {
     const fetchDriverDetails = async () => {
       try {
@@ -34,33 +51,65 @@ const UpdateDeleteDD: React.FC = () => {
         console.error('Error fetching driver details: ', error);
       }
     };
-
+ 
     fetchDriverDetails();
   }, []);
-
+ 
+  const showToast = (message: string) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Notification', message);
+    }
+  };
+ 
   const handleUpdate = async () => {
     if (updatedDetail) {
       const { id, ...rest } = updatedDetail;
       try {
         const detailDoc = doc(FIREBASE_DB, 'DriverDetails', id);
         await updateDoc(detailDoc, rest);
-        setDriverDetails(prevDetails => prevDetails.map(detail => detail.id === id ? updatedDetail : detail));
+        setDriverDetails(prev =>
+          prev.map(detail => (detail.id === id ? updatedDetail : detail))
+        );
         setModalVisible(false);
+        showToast('Driver detail updated successfully!');
       } catch (error) {
         console.error('Error updating driver detail: ', error);
       }
     }
   };
-
+ 
+  const confirmDelete = (id: string) => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this record?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => handleDelete(id),
+        },
+      ]
+    );
+  };
+ 
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(FIREBASE_DB, 'DriverDetails', id));
-      setDriverDetails(prevDetails => prevDetails.filter(detail => detail.id !== id));
+      setDriverDetails(prevDetails =>
+        prevDetails.filter(detail => detail.id !== id)
+      );
+      showToast('Driver detail deleted successfully!');
     } catch (error) {
       console.error('Error deleting driver detail: ', error);
     }
   };
-
+ 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#E8F5E9' }}>
       <Header />
@@ -81,25 +130,27 @@ const UpdateDeleteDD: React.FC = () => {
             <Text style={styles.cardText}>Collecting Area: {item.collectingArea}</Text>
             <Text style={styles.cardText}>Arrival Date: {item.arrivalTime}</Text>
             <Text style={styles.cardText}>Leaving Date: {item.leavingTime}</Text>
-
+ 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.button}
                 onPress={() => {
-                  setSelectedDetail(item);
                   setUpdatedDetail(item);
                   setModalVisible(true);
                 }}
               >
                 <Text style={styles.buttonText}>Update</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.buttonDelete} onPress={() => handleDelete(item.id)}>
+              <TouchableOpacity
+                style={styles.buttonDelete}
+                onPress={() => confirmDelete(item.id)}
+              >
                 <Text style={styles.buttonText}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
         ))}
-
+ 
         {modalVisible && updatedDetail && (
           <Modal
             visible={modalVisible}
@@ -110,58 +161,32 @@ const UpdateDeleteDD: React.FC = () => {
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Update Driver Detail</Text>
-
-                <Text style={styles.modalCdate}>Created Date: {new Date(updatedDetail.cdate).toLocaleDateString()}</Text>
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Vehicle Number"
-                  value={updatedDetail.vehicleNumber}
-                  onChangeText={text => setUpdatedDetail({ ...updatedDetail, vehicleNumber: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Driver Name"
-                  value={updatedDetail.driverName}
-                  onChangeText={text => setUpdatedDetail({ ...updatedDetail, driverName: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Partner Name"
-                  value={updatedDetail.partnerName}
-                  onChangeText={text => setUpdatedDetail({ ...updatedDetail, partnerName: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Vehicle Type"
-                  value={updatedDetail.vehicleType}
-                  onChangeText={text => setUpdatedDetail({ ...updatedDetail, vehicleType: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Capacity (in Tons)"
-                  value={updatedDetail.capacity}
-                  onChangeText={text => setUpdatedDetail({ ...updatedDetail, capacity: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Collecting Area"
-                  value={updatedDetail.collectingArea}
-                  onChangeText={text => setUpdatedDetail({ ...updatedDetail, collectingArea: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Arrival Date"
-                  value={updatedDetail.arrivalTime}
-                  onChangeText={text => setUpdatedDetail({ ...updatedDetail, arrivalTime: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Leaving Date"
-                  value={updatedDetail.leavingTime}
-                  onChangeText={text => setUpdatedDetail({ ...updatedDetail, leavingTime: text })}
-                />
-
+                <Text style={styles.modalCdate}>
+                  Created Date: {new Date(updatedDetail.cdate).toLocaleDateString()}
+                </Text>
+ 
+                {/* Input Fields */}
+                {Object.entries({
+                  vehicleNumber: 'Vehicle Number',
+                  driverName: 'Driver Name',
+                  partnerName: 'Partner Name',
+                  vehicleType: 'Vehicle Type',
+                  capacity: 'Capacity (in Tons)',
+                  collectingArea: 'Collecting Area',
+                  arrivalTime: 'Arrival Date',
+                  leavingTime: 'Leaving Date',
+                }).map(([key, label]) => (
+                  <TextInput
+                    key={key}
+                    style={styles.input}
+                    placeholder={label}
+                    value={(updatedDetail as any)[key]}
+                    onChangeText={text =>
+                      setUpdatedDetail({ ...updatedDetail, [key]: text })
+                    }
+                  />
+                ))}
+ 
                 <View style={styles.modalButtonContainer}>
                   <TouchableOpacity style={styles.modalButton} onPress={handleUpdate}>
                     <Text style={styles.buttonText}>Save</Text>
@@ -179,11 +204,9 @@ const UpdateDeleteDD: React.FC = () => {
     </SafeAreaView>
   );
 };
-
+ 
 const styles = StyleSheet.create({
-  scrollViewContainer: {
-    padding: 10,
-  },
+  scrollViewContainer: { padding: 10 },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 10,
@@ -200,22 +223,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  cardDate: {
-    fontSize: 14,
-    color: '#555',
-    textAlign: 'right',
-  },
+  cardDate: { fontSize: 14, color: '#555', textAlign: 'right' },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
   },
-  cardText: {
-    fontSize: 16,
-    marginBottom: 5,
-    textAlign: 'center',
-  },
+  cardText: { fontSize: 16, marginBottom: 5, textAlign: 'center' },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -235,10 +250,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 5,
   },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-  },
+  buttonText: { color: '#fff', textAlign: 'center' },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -295,7 +307,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#181818',
     textAlign: 'center',
-  }
+  },
 });
-
+ 
 export default UpdateDeleteDD;
