@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Image, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 
-// Import your icons
+
 const homeicon = require('../../assets/CusHome.png');
 const guideicon = require('../../assets/ChatbotIcon.png');
 const cameraicon = require('../../assets/CameraIcon.png');
