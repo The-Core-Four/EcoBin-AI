@@ -4,13 +4,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Entypo } from '@expo/vector-icons';
 
-const DisplayScreen = ({ route }) => {
+const DisplayScreen = ({ route }:{route:any}) => {
   const [description, setDescription] = useState('');
   const [selectedImage, setSelectedImage] = useState(route.params.imageUri);
   const [prompt, setPrompt] = useState('Identify the garbage type and give tips to dispose them correctly?');
   const [loading, setLoading] = useState(false); 
 
-  const analyzeImage = async (imageUri) => {
+  const analyzeImage = async (imageUri: string | URL | Request) => {
     setLoading(true); 
     try {
       const genAI = new GoogleGenerativeAI("AIzaSyBf7I5bOeT6Tk4I8OsGQhOUgQcVmdgzxRc");

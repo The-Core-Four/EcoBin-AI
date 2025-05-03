@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TextInput } from 'react-native';
 import { FIREBASE_DB } from '../../../Firebase_Config';
 import { collection, getDocs } from 'firebase/firestore';
 import CustomerNav from '../../Components/CustomerNav';
@@ -17,6 +17,8 @@ interface Complaint {
 
 const ComplaintList: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [searchText, setSearchText] = useState('');
+  const [filteredComplaints, setFilteredComplaints] = useState<Complaint[]>([]);
 
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -27,6 +29,7 @@ const ComplaintList: React.FC = () => {
           ...doc.data(),
         })) as Complaint[];
         setComplaints(complaintsData);
+        setFilteredComplaints(complaintsData);
       } catch (error) {
         console.error('Error fetching complaints: ', error);
       }
@@ -34,6 +37,18 @@ const ComplaintList: React.FC = () => {
 
     fetchComplaints();
   }, []);
+
+  // Filter complaints based on search input
+  useEffect(() => {
+    const lower = searchText.toLowerCase();
+    const filtered = complaints.filter(
+      c =>
+        c.fullName.toLowerCase().includes(lower) ||
+        c.complaintType.toLowerCase().includes(lower) ||
+        c.status.toLowerCase().includes(lower)
+    );
+    setFilteredComplaints(filtered);
+  }, [searchText, complaints]);
 
   const renderItem = ({ item }: { item: Complaint }) => (
     <View style={styles.itemContainer}>
@@ -56,8 +71,14 @@ const ComplaintList: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search by name, type, or status"
+        value={searchText}
+        onChangeText={setSearchText}
+      />
       <FlatList
-        data={complaints}
+        data={filteredComplaints}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
@@ -82,21 +103,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     padding: 16,
     marginBottom: 16,
-    borderRadius: 12,  // Added border radius for the container
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
-    position: 'relative', // To position the status within the container
+    position: 'relative',
   },
   headerContainer: {
     borderBottomWidth: 2,
     borderBottomColor: '#00acc1',
     marginBottom: 8,
     paddingBottom: 4,
-    flexDirection: 'row', // Align status to the right
-    justifyContent: 'space-between', // Place status on the right
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   headerText: {
@@ -121,7 +142,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     overflow: 'hidden',
-    textAlign: 'center', // Center text within the status container
+    textAlign: 'center',
   },
   resolved: {
     backgroundColor: '#006400',
@@ -130,6 +151,15 @@ const styles = StyleSheet.create({
   pending: {
     backgroundColor: '#FF4500',
     color: '#fff',
+  },
+  searchInput: {
+    backgroundColor: '#fff',
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    margin: 16,
+    fontSize: 16,
   },
   navBar: {
     position: 'absolute',
