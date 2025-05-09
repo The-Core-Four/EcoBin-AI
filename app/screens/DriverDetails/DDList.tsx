@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { FIREBASE_DB } from '../../../Firebase_Config';
 import { collection, getDocs } from 'firebase/firestore';
 import { MaterialIcons } from '@expo/vector-icons';
 import AdminNav from '../../Components/AdminNav';
 import Header from '../../Components/HeaderAdmin';
-
+ 
 interface DriverDetail {
   id: string;
   driverName: string;
@@ -18,40 +26,66 @@ interface DriverDetail {
   leavingTime: string;
   cdate: string;
 }
-
+ 
 const DDList: React.FC = () => {
   const [driverDetails, setDriverDetails] = useState<DriverDetail[]>([]);
+  const [filteredDrivers, setFilteredDrivers] = useState<DriverDetail[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [searchText, setSearchText] = useState('');
+ 
   useEffect(() => {
     const fetchDriverDetails = async () => {
       try {
         const querySnapshot = await getDocs(collection(FIREBASE_DB, 'DriverDetails'));
-        const details = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as DriverDetail[];
+        const details = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as DriverDetail[];
         setDriverDetails(details);
+        setFilteredDrivers(details);
       } catch (error) {
         console.error('Error fetching driver details: ', error);
       } finally {
         setLoading(false);
       }
     };
-
+ 
     fetchDriverDetails();
   }, []);
-
+ 
+  useEffect(() => {
+    const lower = searchText.toLowerCase();
+    const filtered = driverDetails.filter(d =>
+      d.driverName.toLowerCase().includes(lower) ||
+      d.vehicleNumber.toLowerCase().includes(lower) ||
+      d.partnerName.toLowerCase().includes(lower) ||
+      d.collectingArea.toLowerCase().includes(lower) ||
+      d.vehicleType.toLowerCase().includes(lower)
+    );
+    setFilteredDrivers(filtered);
+  }, [searchText, driverDetails]);
+ 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       <Text style={styles.title}>Driver Details</Text>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search by name, vehicle, area, etc."
+        value={searchText}
+        onChangeText={setSearchText}
+      />
       {loading ? (
         <ActivityIndicator size="large" color="#2E7D32" style={{ marginTop: 20 }} />
       ) : (
         <ScrollView contentContainerStyle={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {driverDetails.map((item) => (
+          {filteredDrivers.map(item => (
             <View key={item.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.driverName}>{item.driverName}</Text>
-                <Text style={styles.date}>{new Date(item.cdate).toLocaleDateString()}</Text>
+                <Text style={styles.date}>
+                  {new Date(item.cdate).toLocaleDateString()}
+                </Text>
               </View>
               <Text style={styles.vehicleNumber}>{item.vehicleNumber}</Text>
               <View style={styles.detailsRow}>
@@ -72,7 +106,9 @@ const DDList: React.FC = () => {
               </View>
               <View style={styles.detailsRow}>
                 <MaterialIcons name="access-time" size={20} color="#4CAF50" />
-                <Text style={styles.cardText}>Arrival: {item.arrivalTime} - Leaving: {item.leavingTime}</Text>
+                <Text style={styles.cardText}>
+                  Arrival: {item.arrivalTime} - Leaving: {item.leavingTime}
+                </Text>
               </View>
             </View>
           ))}
@@ -82,7 +118,7 @@ const DDList: React.FC = () => {
     </SafeAreaView>
   );
 };
-
+ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -90,6 +126,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     padding: 15,
+    paddingBottom: 80,
   },
   title: {
     fontSize: 28,
@@ -97,6 +134,16 @@ const styles = StyleSheet.create({
     color: '#2E7D32',
     textAlign: 'center',
     marginVertical: 15,
+  },
+  searchInput: {
+    backgroundColor: '#fff',
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    fontSize: 16,
   },
   card: {
     backgroundColor: '#fff',
@@ -141,5 +188,5 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
-
+ 
 export default DDList;
