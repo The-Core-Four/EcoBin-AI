@@ -207,11 +207,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   button: {
-<<<<<<< HEAD
-    backgroundColor: Colors.light.FOREST_GREEN,
-=======
     backgroundColor: '#166534',
->>>>>>> 132eed584a15a9692b31d5705c143332e5870c1b
     borderRadius: 12,
     padding: 18,
     marginTop: 24,

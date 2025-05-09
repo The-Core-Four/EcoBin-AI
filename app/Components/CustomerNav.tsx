@@ -4,17 +4,10 @@ import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Colors } from '../constants/Colors';
 
-<<<<<<< HEAD
-const CustomerNav: React.FC = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const [activeTab, setActiveTab] = useState(route.name);
-=======
 
 const homeicon = require('../../assets/CusHome.png');
 const guideicon = require('../../assets/ChatbotIcon.png');
 const cameraicon = require('../../assets/CameraIcon.png');
->>>>>>> 132eed584a15a9692b31d5705c143332e5870c1b
 
   useEffect(() => {
     const state = navigation.getState();
