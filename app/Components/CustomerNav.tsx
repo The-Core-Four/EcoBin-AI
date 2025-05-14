@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Colors } from '../constants/Colors';
@@ -8,6 +8,17 @@ import { Colors } from '../constants/Colors';
 const homeicon = require('../../assets/CusHome.png');
 const guideicon = require('../../assets/ChatbotIcon.png');
 const cameraicon = require('../../assets/CameraIcon.png');
+
+type CustomerNavParamList = {
+  CustomerHome: undefined;
+  Chatbot: undefined;
+  CameradScreen: undefined;
+};
+
+const CustomerNav = () => {  
+  const navigation = useNavigation<NavigationProp<CustomerNavParamList>>();
+  const route = useRoute();
+  const [activeTab, setActiveTab] = useState('');
 
   useEffect(() => {
     const state = navigation.getState();
